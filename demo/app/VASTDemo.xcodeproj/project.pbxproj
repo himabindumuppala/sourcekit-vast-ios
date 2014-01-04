@@ -1,0 +1,598 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		27404F9D183EA5C100FE754E /* nexage.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 27404F9C183EA5C100FE754E /* nexage.jpg */; };
+		27404FA1183EA5F400FE754E /* AboutVC.m in Sources */ = {isa = PBXBuildFile; fileRef = 27404FA0183EA5F400FE754E /* AboutVC.m */; };
+		27404FA8183EA75400FE754E /* VAST.h in Resources */ = {isa = PBXBuildFile; fileRef = 27404FA7183EA75400FE754E /* VAST.h */; };
+		2744F834184D34AA0006FF04 /* VASTError.h in Resources */ = {isa = PBXBuildFile; fileRef = 2744F832184D34AA0006FF04 /* VASTError.h */; };
+		2744F835184D34AA0006FF04 /* VASTViewController.h in Resources */ = {isa = PBXBuildFile; fileRef = 2744F833184D34AA0006FF04 /* VASTViewController.h */; };
+		274E3F8A183C1D2C0094FD13 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 274E3F89183C1D2C0094FD13 /* Foundation.framework */; };
+		274E3F8C183C1D2C0094FD13 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 274E3F8B183C1D2C0094FD13 /* CoreGraphics.framework */; };
+		274E3F8E183C1D2C0094FD13 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 274E3F8D183C1D2C0094FD13 /* UIKit.framework */; };
+		274E3F96183C1D2C0094FD13 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 274E3F95183C1D2C0094FD13 /* main.m */; };
+		274E3F9A183C1D2C0094FD13 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 274E3F99183C1D2C0094FD13 /* AppDelegate.m */; };
+		274E3FC5183C1DC60094FD13 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 274E3FC4183C1DC60094FD13 /* Main.storyboard */; };
+		274E3FCD183C1DEC0094FD13 /* about.png in Resources */ = {isa = PBXBuildFile; fileRef = 274E3FC6183C1DEC0094FD13 /* about.png */; };
+		274E3FCE183C1DEC0094FD13 /* Default-568h.png in Resources */ = {isa = PBXBuildFile; fileRef = 274E3FC7183C1DEC0094FD13 /* Default-568h.png */; };
+		274E3FCF183C1DEC0094FD13 /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = 274E3FC8183C1DEC0094FD13 /* Default.png */; };
+		274E3FD0183C1DEC0094FD13 /* Default@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 274E3FC9183C1DEC0094FD13 /* Default@2x.png */; };
+		274E3FD1183C1DEC0094FD13 /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 274E3FCA183C1DEC0094FD13 /* icon.png */; };
+		274E3FD2183C1DEC0094FD13 /* icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 274E3FCB183C1DEC0094FD13 /* icon@2x.png */; };
+		274E3FD3183C1DEC0094FD13 /* interstitials.png in Resources */ = {isa = PBXBuildFile; fileRef = 274E3FCC183C1DEC0094FD13 /* interstitials.png */; };
+		274E3FD6183C1E000094FD13 /* CreativesTVC.m in Sources */ = {isa = PBXBuildFile; fileRef = 274E3FD5183C1E000094FD13 /* CreativesTVC.m */; };
+		274E3FD8183C1E8E0094FD13 /* iab-vast-logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 274E3FD7183C1E8E0094FD13 /* iab-vast-logo.png */; };
+		274E3FE2183C1EC40094FD13 /* libSourceKitCommon.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 274E3FDF183C1EAA0094FD13 /* libSourceKitCommon.a */; };
+		274E3FE4183C1ED00094FD13 /* SourceKitLogger.h in Resources */ = {isa = PBXBuildFile; fileRef = 274E3FE3183C1ED00094FD13 /* SourceKitLogger.h */; };
+		274E3FF7183C1F1E0094FD13 /* libVAST.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 274E3FEC183C1EE70094FD13 /* libVAST.a */; };
+		274E3FF9183C1FA30094FD13 /* MediaPlayer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 274E3FF8183C1FA30094FD13 /* MediaPlayer.framework */; };
+		274E3FFE183C1FDF0094FD13 /* Error.xml in Resources */ = {isa = PBXBuildFile; fileRef = 274E3FFB183C1FDF0094FD13 /* Error.xml */; };
+		274E3FFF183C1FDF0094FD13 /* Simple.xml in Resources */ = {isa = PBXBuildFile; fileRef = 274E3FFC183C1FDF0094FD13 /* Simple.xml */; };
+		274E4000183C1FDF0094FD13 /* SimpleTracking.xml in Resources */ = {isa = PBXBuildFile; fileRef = 274E3FFD183C1FDF0094FD13 /* SimpleTracking.xml */; };
+		2781329E183D2C1700185C84 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2781329D183D2C1700185C84 /* SystemConfiguration.framework */; };
+		279017F9183C75CE00829737 /* WrapperSimple.xml in Resources */ = {isa = PBXBuildFile; fileRef = 279017F8183C75CE00829737 /* WrapperSimple.xml */; };
+		27CEF2DB183C6A39001DC90B /* VASTResources.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 274E3FEE183C1EE70094FD13 /* VASTResources.bundle */; };
+		E2F628E3183D150400B58D5D /* vast_wrapper_linear_1.xml in Resources */ = {isa = PBXBuildFile; fileRef = E2F628C2183D150400B58D5D /* vast_wrapper_linear_1.xml */; };
+		E2F628EB183D150400B58D5D /* vast_missing_mediafile.xml in Resources */ = {isa = PBXBuildFile; fileRef = E2F628CA183D150400B58D5D /* vast_missing_mediafile.xml */; };
+		E2F628F0183D150400B58D5D /* vast_liverail_linear_comp.xml in Resources */ = {isa = PBXBuildFile; fileRef = E2F628CF183D150400B58D5D /* vast_liverail_linear_comp.xml */; };
+		E2F628FD183D150400B58D5D /* vast_doubleclick_inline_comp.xml in Resources */ = {isa = PBXBuildFile; fileRef = E2F628DC183D150400B58D5D /* vast_doubleclick_inline_comp.xml */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		274E3FDE183C1EAA0094FD13 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 274E3FDA183C1EAA0094FD13 /* SourceKitCommon.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 2750AD631832BBF9005E1EE0;
+			remoteInfo = SourceKitCommon;
+		};
+		274E3FE0183C1EC00094FD13 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 274E3FDA183C1EAA0094FD13 /* SourceKitCommon.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 2750AD621832BBF9005E1EE0;
+			remoteInfo = SourceKitCommon;
+		};
+		274E3FEB183C1EE70094FD13 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 274E3FE6183C1EE70094FD13 /* VAST.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = E248E36717FA2A87003F4B8A;
+			remoteInfo = VAST;
+		};
+		274E3FED183C1EE70094FD13 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 274E3FE6183C1EE70094FD13 /* VAST.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = E24303C3183AA2F500408EF4;
+			remoteInfo = VASTResources;
+		};
+		274E3FF5183C1F150094FD13 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 274E3FE6183C1EE70094FD13 /* VAST.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = E248E36617FA2A87003F4B8A;
+			remoteInfo = VAST;
+		};
+		27B84064183C42A900D3C828 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 274E3FE6183C1EE70094FD13 /* VAST.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 27CE3B48183C209000AA96AA;
+			remoteInfo = "VAST Tests";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		27404F9C183EA5C100FE754E /* nexage.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = nexage.jpg; sourceTree = "<group>"; };
+		27404F9F183EA5F400FE754E /* AboutVC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AboutVC.h; sourceTree = "<group>"; };
+		27404FA0183EA5F400FE754E /* AboutVC.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AboutVC.m; sourceTree = "<group>"; };
+		27404FA7183EA75400FE754E /* VAST.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VAST.h; path = ../../../src/VAST/VAST.h; sourceTree = "<group>"; };
+		2744F832184D34AA0006FF04 /* VASTError.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VASTError.h; path = ../../../src/VAST/VASTError.h; sourceTree = "<group>"; };
+		2744F833184D34AA0006FF04 /* VASTViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VASTViewController.h; path = ../../../src/VAST/VASTViewController.h; sourceTree = "<group>"; };
+		274E3F86183C1D2C0094FD13 /* VASTDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VASTDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		274E3F89183C1D2C0094FD13 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		274E3F8B183C1D2C0094FD13 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		274E3F8D183C1D2C0094FD13 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		274E3F91183C1D2C0094FD13 /* VASTDemo-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "VASTDemo-Info.plist"; sourceTree = "<group>"; };
+		274E3F95183C1D2C0094FD13 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		274E3F97183C1D2C0094FD13 /* VASTDemo-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VASTDemo-Prefix.pch"; sourceTree = "<group>"; };
+		274E3F98183C1D2C0094FD13 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		274E3F99183C1D2C0094FD13 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		274E3FAB183C1D2D0094FD13 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
+		274E3FC4183C1DC60094FD13 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
+		274E3FC6183C1DEC0094FD13 /* about.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = about.png; sourceTree = "<group>"; };
+		274E3FC7183C1DEC0094FD13 /* Default-568h.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h.png"; sourceTree = "<group>"; };
+		274E3FC8183C1DEC0094FD13 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Default.png; sourceTree = "<group>"; };
+		274E3FC9183C1DEC0094FD13 /* Default@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default@2x.png"; sourceTree = "<group>"; };
+		274E3FCA183C1DEC0094FD13 /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
+		274E3FCB183C1DEC0094FD13 /* icon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon@2x.png"; sourceTree = "<group>"; };
+		274E3FCC183C1DEC0094FD13 /* interstitials.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = interstitials.png; sourceTree = "<group>"; };
+		274E3FD4183C1E000094FD13 /* CreativesTVC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CreativesTVC.h; sourceTree = "<group>"; };
+		274E3FD5183C1E000094FD13 /* CreativesTVC.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CreativesTVC.m; sourceTree = "<group>"; };
+		274E3FD7183C1E8E0094FD13 /* iab-vast-logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "iab-vast-logo.png"; sourceTree = "<group>"; };
+		274E3FDA183C1EAA0094FD13 /* SourceKitCommon.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SourceKitCommon.xcodeproj; path = "../../../sourcekit-common-ios/src/SourceKitCommon.xcodeproj"; sourceTree = "<group>"; };
+		274E3FE3183C1ED00094FD13 /* SourceKitLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SourceKitLogger.h; path = "../../../../sourcekit-common-ios/src/SourceKit/SourceKitLogger.h"; sourceTree = "<group>"; };
+		274E3FE6183C1EE70094FD13 /* VAST.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = VAST.xcodeproj; path = ../../src/VAST.xcodeproj; sourceTree = "<group>"; };
+		274E3FF8183C1FA30094FD13 /* MediaPlayer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MediaPlayer.framework; path = System/Library/Frameworks/MediaPlayer.framework; sourceTree = SDKROOT; };
+		274E3FFB183C1FDF0094FD13 /* Error.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = Error.xml; sourceTree = "<group>"; };
+		274E3FFC183C1FDF0094FD13 /* Simple.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = Simple.xml; sourceTree = "<group>"; };
+		274E3FFD183C1FDF0094FD13 /* SimpleTracking.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = SimpleTracking.xml; sourceTree = "<group>"; };
+		2781329D183D2C1700185C84 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
+		279017F8183C75CE00829737 /* WrapperSimple.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = WrapperSimple.xml; sourceTree = "<group>"; };
+		E2F628C2183D150400B58D5D /* vast_wrapper_linear_1.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = vast_wrapper_linear_1.xml; sourceTree = "<group>"; };
+		E2F628CA183D150400B58D5D /* vast_missing_mediafile.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = vast_missing_mediafile.xml; sourceTree = "<group>"; };
+		E2F628CF183D150400B58D5D /* vast_liverail_linear_comp.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = vast_liverail_linear_comp.xml; sourceTree = "<group>"; };
+		E2F628DC183D150400B58D5D /* vast_doubleclick_inline_comp.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = vast_doubleclick_inline_comp.xml; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		274E3F83183C1D2C0094FD13 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2781329E183D2C1700185C84 /* SystemConfiguration.framework in Frameworks */,
+				274E3FF9183C1FA30094FD13 /* MediaPlayer.framework in Frameworks */,
+				274E3FF7183C1F1E0094FD13 /* libVAST.a in Frameworks */,
+				274E3FE2183C1EC40094FD13 /* libSourceKitCommon.a in Frameworks */,
+				274E3F8C183C1D2C0094FD13 /* CoreGraphics.framework in Frameworks */,
+				274E3F8E183C1D2C0094FD13 /* UIKit.framework in Frameworks */,
+				274E3F8A183C1D2C0094FD13 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		27404FA9183EA79B00FE754E /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				274E3FE3183C1ED00094FD13 /* SourceKitLogger.h */,
+			);
+			name = Common;
+			sourceTree = "<group>";
+		};
+		27404FAA183EA7A400FE754E /* VAST */ = {
+			isa = PBXGroup;
+			children = (
+				27404FA7183EA75400FE754E /* VAST.h */,
+				2744F832184D34AA0006FF04 /* VASTError.h */,
+				2744F833184D34AA0006FF04 /* VASTViewController.h */,
+			);
+			name = VAST;
+			sourceTree = "<group>";
+		};
+		274E3F7D183C1D2C0094FD13 = {
+			isa = PBXGroup;
+			children = (
+				274E3FDA183C1EAA0094FD13 /* SourceKitCommon.xcodeproj */,
+				274E3FE6183C1EE70094FD13 /* VAST.xcodeproj */,
+				274E3F8F183C1D2C0094FD13 /* VASTDemo */,
+				274E3F88183C1D2C0094FD13 /* Frameworks */,
+				274E3F87183C1D2C0094FD13 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		274E3F87183C1D2C0094FD13 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				274E3F86183C1D2C0094FD13 /* VASTDemo.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		274E3F88183C1D2C0094FD13 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				2781329D183D2C1700185C84 /* SystemConfiguration.framework */,
+				274E3FF8183C1FA30094FD13 /* MediaPlayer.framework */,
+				274E3F89183C1D2C0094FD13 /* Foundation.framework */,
+				274E3F8B183C1D2C0094FD13 /* CoreGraphics.framework */,
+				274E3F8D183C1D2C0094FD13 /* UIKit.framework */,
+				274E3FAB183C1D2D0094FD13 /* XCTest.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		274E3F8F183C1D2C0094FD13 /* VASTDemo */ = {
+			isa = PBXGroup;
+			children = (
+				274E3FFA183C1FDF0094FD13 /* creatives */,
+				274E3FE5183C1ED50094FD13 /* Imports */,
+				274E3F98183C1D2C0094FD13 /* AppDelegate.h */,
+				274E3F99183C1D2C0094FD13 /* AppDelegate.m */,
+				274E3FD4183C1E000094FD13 /* CreativesTVC.h */,
+				274E3FD5183C1E000094FD13 /* CreativesTVC.m */,
+				274E3F90183C1D2C0094FD13 /* Supporting Files */,
+				27404F9F183EA5F400FE754E /* AboutVC.h */,
+				27404FA0183EA5F400FE754E /* AboutVC.m */,
+			);
+			path = VASTDemo;
+			sourceTree = "<group>";
+		};
+		274E3F90183C1D2C0094FD13 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				274E3FD9183C1E920094FD13 /* Images */,
+				274E3FC4183C1DC60094FD13 /* Main.storyboard */,
+				274E3F91183C1D2C0094FD13 /* VASTDemo-Info.plist */,
+				274E3F95183C1D2C0094FD13 /* main.m */,
+				274E3F97183C1D2C0094FD13 /* VASTDemo-Prefix.pch */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		274E3FD9183C1E920094FD13 /* Images */ = {
+			isa = PBXGroup;
+			children = (
+				27404F9C183EA5C100FE754E /* nexage.jpg */,
+				274E3FD7183C1E8E0094FD13 /* iab-vast-logo.png */,
+				274E3FC6183C1DEC0094FD13 /* about.png */,
+				274E3FC7183C1DEC0094FD13 /* Default-568h.png */,
+				274E3FC8183C1DEC0094FD13 /* Default.png */,
+				274E3FC9183C1DEC0094FD13 /* Default@2x.png */,
+				274E3FCA183C1DEC0094FD13 /* icon.png */,
+				274E3FCB183C1DEC0094FD13 /* icon@2x.png */,
+				274E3FCC183C1DEC0094FD13 /* interstitials.png */,
+			);
+			name = Images;
+			sourceTree = "<group>";
+		};
+		274E3FDB183C1EAA0094FD13 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				274E3FDF183C1EAA0094FD13 /* libSourceKitCommon.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		274E3FE5183C1ED50094FD13 /* Imports */ = {
+			isa = PBXGroup;
+			children = (
+				27404FA9183EA79B00FE754E /* Common */,
+				27404FAA183EA7A400FE754E /* VAST */,
+			);
+			name = Imports;
+			sourceTree = "<group>";
+		};
+		274E3FE7183C1EE70094FD13 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				274E3FEC183C1EE70094FD13 /* libVAST.a */,
+				274E3FEE183C1EE70094FD13 /* VASTResources.bundle */,
+				27B84065183C42A900D3C828 /* VAST Tests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		274E3FFA183C1FDF0094FD13 /* creatives */ = {
+			isa = PBXGroup;
+			children = (
+				E2F6290A183D1DE300B58D5D /* Simple */,
+				E2F62905183D1A0F00B58D5D /* Nexage */,
+				E2F62908183D1B1800B58D5D /* Others */,
+			);
+			name = creatives;
+			path = ../../creatives;
+			sourceTree = "<group>";
+		};
+		E2F62905183D1A0F00B58D5D /* Nexage */ = {
+			isa = PBXGroup;
+			children = (
+				E2F628C2183D150400B58D5D /* vast_wrapper_linear_1.xml */,
+				E2F628CA183D150400B58D5D /* vast_missing_mediafile.xml */,
+			);
+			name = Nexage;
+			sourceTree = "<group>";
+		};
+		E2F62908183D1B1800B58D5D /* Others */ = {
+			isa = PBXGroup;
+			children = (
+				E2F628DC183D150400B58D5D /* vast_doubleclick_inline_comp.xml */,
+				E2F628CF183D150400B58D5D /* vast_liverail_linear_comp.xml */,
+			);
+			name = Others;
+			sourceTree = "<group>";
+		};
+		E2F6290A183D1DE300B58D5D /* Simple */ = {
+			isa = PBXGroup;
+			children = (
+				274E3FFC183C1FDF0094FD13 /* Simple.xml */,
+				274E3FFD183C1FDF0094FD13 /* SimpleTracking.xml */,
+				279017F8183C75CE00829737 /* WrapperSimple.xml */,
+				274E3FFB183C1FDF0094FD13 /* Error.xml */,
+			);
+			name = Simple;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		274E3F85183C1D2C0094FD13 /* VASTDemo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 274E3FBB183C1D2D0094FD13 /* Build configuration list for PBXNativeTarget "VASTDemo" */;
+			buildPhases = (
+				274E3F82183C1D2C0094FD13 /* Sources */,
+				274E3F83183C1D2C0094FD13 /* Frameworks */,
+				274E3F84183C1D2C0094FD13 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				274E3FF6183C1F150094FD13 /* PBXTargetDependency */,
+				274E3FE1183C1EC00094FD13 /* PBXTargetDependency */,
+			);
+			name = VASTDemo;
+			productName = VASTDemo;
+			productReference = 274E3F86183C1D2C0094FD13 /* VASTDemo.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		274E3F7E183C1D2C0094FD13 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0500;
+				ORGANIZATIONNAME = "Nexage, Inc.";
+			};
+			buildConfigurationList = 274E3F81183C1D2C0094FD13 /* Build configuration list for PBXProject "VASTDemo" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 274E3F7D183C1D2C0094FD13;
+			productRefGroup = 274E3F87183C1D2C0094FD13 /* Products */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 274E3FDB183C1EAA0094FD13 /* Products */;
+					ProjectRef = 274E3FDA183C1EAA0094FD13 /* SourceKitCommon.xcodeproj */;
+				},
+				{
+					ProductGroup = 274E3FE7183C1EE70094FD13 /* Products */;
+					ProjectRef = 274E3FE6183C1EE70094FD13 /* VAST.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				274E3F85183C1D2C0094FD13 /* VASTDemo */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		274E3FDF183C1EAA0094FD13 /* libSourceKitCommon.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libSourceKitCommon.a;
+			remoteRef = 274E3FDE183C1EAA0094FD13 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		274E3FEC183C1EE70094FD13 /* libVAST.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libVAST.a;
+			remoteRef = 274E3FEB183C1EE70094FD13 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		274E3FEE183C1EE70094FD13 /* VASTResources.bundle */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = VASTResources.bundle;
+			remoteRef = 274E3FED183C1EE70094FD13 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		27B84065183C42A900D3C828 /* VAST Tests.xctest */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = "VAST Tests.xctest";
+			remoteRef = 27B84064183C42A900D3C828 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXResourcesBuildPhase section */
+		274E3F84183C1D2C0094FD13 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				27404F9D183EA5C100FE754E /* nexage.jpg in Resources */,
+				274E3FD0183C1DEC0094FD13 /* Default@2x.png in Resources */,
+				274E3FFF183C1FDF0094FD13 /* Simple.xml in Resources */,
+				E2F628E3183D150400B58D5D /* vast_wrapper_linear_1.xml in Resources */,
+				274E3FD2183C1DEC0094FD13 /* icon@2x.png in Resources */,
+				274E3FD1183C1DEC0094FD13 /* icon.png in Resources */,
+				2744F834184D34AA0006FF04 /* VASTError.h in Resources */,
+				27404FA8183EA75400FE754E /* VAST.h in Resources */,
+				274E3FCE183C1DEC0094FD13 /* Default-568h.png in Resources */,
+				274E3FD3183C1DEC0094FD13 /* interstitials.png in Resources */,
+				274E3FD8183C1E8E0094FD13 /* iab-vast-logo.png in Resources */,
+				274E3FC5183C1DC60094FD13 /* Main.storyboard in Resources */,
+				274E3FCD183C1DEC0094FD13 /* about.png in Resources */,
+				274E3FE4183C1ED00094FD13 /* SourceKitLogger.h in Resources */,
+				274E3FCF183C1DEC0094FD13 /* Default.png in Resources */,
+				E2F628FD183D150400B58D5D /* vast_doubleclick_inline_comp.xml in Resources */,
+				2744F835184D34AA0006FF04 /* VASTViewController.h in Resources */,
+				E2F628EB183D150400B58D5D /* vast_missing_mediafile.xml in Resources */,
+				E2F628F0183D150400B58D5D /* vast_liverail_linear_comp.xml in Resources */,
+				274E3FFE183C1FDF0094FD13 /* Error.xml in Resources */,
+				279017F9183C75CE00829737 /* WrapperSimple.xml in Resources */,
+				274E4000183C1FDF0094FD13 /* SimpleTracking.xml in Resources */,
+				27CEF2DB183C6A39001DC90B /* VASTResources.bundle in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		274E3F82183C1D2C0094FD13 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				27404FA1183EA5F400FE754E /* AboutVC.m in Sources */,
+				274E3F9A183C1D2C0094FD13 /* AppDelegate.m in Sources */,
+				274E3FD6183C1E000094FD13 /* CreativesTVC.m in Sources */,
+				274E3F96183C1D2C0094FD13 /* main.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		274E3FE1183C1EC00094FD13 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = SourceKitCommon;
+			targetProxy = 274E3FE0183C1EC00094FD13 /* PBXContainerItemProxy */;
+		};
+		274E3FF6183C1F150094FD13 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = VAST;
+			targetProxy = 274E3FF5183C1F150094FD13 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		274E3FB9183C1D2D0094FD13 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					/usr/include/libxml2,
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = "-lxml2";
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		274E3FBA183C1D2D0094FD13 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					/usr/include/libxml2,
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				OTHER_LDFLAGS = "-lxml2";
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		274E3FBC183C1D2D0094FD13 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "VASTDemo/VASTDemo-Prefix.pch";
+				INFOPLIST_FILE = "VASTDemo/VASTDemo-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Debug;
+		};
+		274E3FBD183C1D2D0094FD13 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "VASTDemo/VASTDemo-Prefix.pch";
+				INFOPLIST_FILE = "VASTDemo/VASTDemo-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		274E3F81183C1D2C0094FD13 /* Build configuration list for PBXProject "VASTDemo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				274E3FB9183C1D2D0094FD13 /* Debug */,
+				274E3FBA183C1D2D0094FD13 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		274E3FBB183C1D2D0094FD13 /* Build configuration list for PBXNativeTarget "VASTDemo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				274E3FBC183C1D2D0094FD13 /* Debug */,
+				274E3FBD183C1D2D0094FD13 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 274E3F7E183C1D2C0094FD13 /* Project object */;
+}
