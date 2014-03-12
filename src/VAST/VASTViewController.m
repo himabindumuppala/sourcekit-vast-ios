@@ -19,11 +19,10 @@
 #import "VASTMediaFilePicker.h"
 #import "Reachability.h"
 
-#define kKitVersion 0.1
 #define SYSTEM_VERSION_LESS_THAN(v)     ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedAscending)
 
 static const float kPlayTimeCounterInterval = 0.25;
-static const float kVideoTimoutInterval = 10.0;
+static const float kVideoLoadTimeoutInterval = 10.0;
 static const NSString* kPlaybackFinishedUserInfoErrorKey=@"error";
 static const float kControlsToolbarHeight=44.0;
 
@@ -39,9 +38,10 @@ typedef enum {
     NSURL *mediaFileURL;
     NSArray *clickTracking;
     NSArray *vastErrors;
+    NSArray *impressions;
     NSTimer *playbackTimer;
     NSTimer *controlsTimer;
-    NSTimer *videoTimeoutTimer;
+    NSTimer *videoLoadTimeoutTimer;
     NSTimeInterval movieDuration;
     NSTimeInterval playedSeconds;
     
@@ -52,11 +52,10 @@ typedef enum {
     BOOL isViewOnScreen;
     BOOL hasPlayerStarted;
     BOOL isLoadCalled;
-    BOOL backGroundPlayingStateAutoPaused;
-    BOOL hasResignedActive;
     BOOL vastReady;
     BOOL statusBarHidden;
     CurrentVASTQuartile currentQuartile;
+    UIActivityIndicatorView *loadingIndicator;
     
     Reachability *reachabilityForVAST;
     NetworkReachable networkReachableBlock;
@@ -72,6 +71,8 @@ typedef enum {
 @end
 
 @implementation VASTViewController
+
+#pragma mark - Init & dealloc
 
 - (id)init
 {
@@ -89,151 +90,285 @@ typedef enum {
         
         [self setupReachability];
         
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(playbackStateChangeNotification:)
-                                                     name:MPMoviePlayerPlaybackStateDidChangeNotification
+        [[NSNotificationCenter defaultCenter] addObserver: self
+												 selector: @selector(applicationDidBecomeActive:)
+													 name: UIApplicationDidBecomeActiveNotification
+												   object: nil];
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(movieDuration:)
+                                                     name:MPMovieDurationAvailableNotification
                                                    object:nil];
- 
+        
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(moviePlayBackDidFinish:)
                                                      name:MPMoviePlayerPlaybackDidFinishNotification
                                                    object:nil];
-  
+        
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(movieDuration:)
-                                                     name:MPMovieDurationAvailableNotification
+                                                 selector:@selector(playbackStateChangeNotification:)
+                                                     name:MPMoviePlayerPlaybackStateDidChangeNotification
+                                                   object:nil];
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(moviePlayerLoadStateChanged:)
+                                                     name:MPMoviePlayerLoadStateDidChangeNotification
                                                    object:nil];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(movieSourceType:)
                                                      name:MPMovieSourceTypeAvailableNotification
                                                    object:nil];
-        
-        [[NSNotificationCenter defaultCenter] addObserver: self
-												 selector: @selector(applicationWillResignActive:)
-													 name: UIApplicationWillResignActiveNotification
-												   object: nil];
-    
-        [[NSNotificationCenter defaultCenter] addObserver: self
-												 selector: @selector(applicationDidBecomeActive:)
-													 name: UIApplicationDidBecomeActiveNotification
-												   object: nil];
-        }
+    }
     return self;
-}
-
--(void)viewWillAppear:(BOOL)animated{
-    statusBarHidden = [[UIApplication sharedApplication] isStatusBarHidden];
-    if (SYSTEM_VERSION_LESS_THAN(@"7.0")) {
-        [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
-    }
-}
-
--(void)viewWillDisappear:(BOOL)animated{
-    if (SYSTEM_VERSION_LESS_THAN(@"7.0")) {
-        [[UIApplication sharedApplication] setStatusBarHidden:statusBarHidden withAnimation:UIStatusBarAnimationFade];
-    }
-}
-
-- (void)viewDidAppear:(BOOL)animated
-{
-    [SourceKitLogger debug:[NSString stringWithFormat:@"%@", NSStringFromSelector(_cmd)]];
-    isViewOnScreen=YES;
-    if (!hasPlayerStarted) {
-        [self showAndPlayVideo];
-    } else {
-        // resuming from background or phone call, so resume if was playing, stay paused if manually paused
-        if (backGroundPlayingStateAutoPaused) {
-            [self pausePlay];  // we were paused, so resume, otherwise do nothing
-        }
-    }
-}
-
-- (void)initializeAndPreparePlayer
-{
-    [SourceKitLogger debug:@"initializing player"];
-
-    if (!self.networkCurrentlyReachable) {   // Reachability may have changed, so we need to test again just before loading the video itself
-        [SourceKitLogger debug:@"No network available - VASTViewcontroller will not be presented"];
-        if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
-            [self.delegate vastError:self error:VASTErrorNoInternetConnection];  // There is network so no requests can be sent, we don't queue errors, so no external Error event is sent.
-        }
-        return;
-    }
-
-    @try {
-        self.moviePlayer = [[MPMoviePlayerController alloc] initWithContentURL:mediaFileURL];
-        playedSeconds = 0.0;
-        currentPlayedPercentage = 0.0;
-        self.moviePlayer.controlStyle=MPMovieControlStyleNone;  // see 'showControls' for custom control toolbar set up
-        [self.moviePlayer prepareToPlay];
-    }
-    @catch (NSException *e) {
-        [SourceKitLogger debug:[NSString stringWithFormat:@"Exception - [self.moviePlayer prepareToPlay: %@", e]];
-        if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
-            [self.delegate vastError:self error:VASTErrorPlaybackError];
-        }
-        if (vastErrors) {
-            [SourceKitLogger debug:@"Sending Error requests"];
-            [self.eventProcessor sendVASTUrlsWithId:vastErrors];
-        }
-        [self dismiss];
-        return;
-    }
 }
 
 - (void)dealloc
 {
     [reachabilityForVAST stopNotifier];
     [self removeObservers];
-    [SourceKitLogger debug:[NSString stringWithFormat:@"%@", NSStringFromSelector(_cmd)]];
 }
 
-- (void)removeObservers
+#pragma mark - Load methods
+
+- (void)loadVideoWithURL:(NSURL *)url
 {
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:MPMoviePlayerPlaybackStateDidChangeNotification object:nil];
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:MPMoviePlayerPlaybackDidFinishNotification object:nil];
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:MPMovieDurationAvailableNotification object:nil];
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:MPMovieSourceTypeAvailableNotification object:nil];
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationWillResignActiveNotification object:nil];
-    [SourceKitLogger debug:[NSString stringWithFormat:@"%@", NSStringFromSelector(_cmd)]];
+    [self loadVideoUsingSource:url];
 }
 
-- (void)viewDidDisappear:(BOOL)animated
+- (void)loadVideoWithData:(NSData *)xmlContent
 {
-    [SourceKitLogger debug:  [NSString stringWithFormat:@"%@", NSStringFromSelector(_cmd)]];
-    if ([self.delegate respondsToSelector:@selector(vastDidDismissFullScreen:)]) {
-        [self.delegate vastDidDismissFullScreen:self];
+    [self loadVideoUsingSource:xmlContent];
+}
+
+- (void)loadVideoUsingSource:(id)source
+{
+    [SourceKitLogger debug:([source isKindOfClass:[NSURL class]]?@"Starting loadVideoWithURL":@"Starting loadVideoWithData")];
+    
+    if (isLoadCalled) {
+        [SourceKitLogger debug:@"Ignoring loadVideo because a load is in progress."];
+        return;
+    }
+    isLoadCalled = YES;
+    [self startVideoLoadTimeoutTimer];
+    
+    void (^parserCompletionBlock)(VASTModel *vastModel, VASTError vastError) = ^(VASTModel *vastModel, VASTError vastError) {
+        [SourceKitLogger debug:@"back from block in loadVideoFromData"];
+        if (!vastModel) {
+            [SourceKitLogger debug:@"parser error"];
+            if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {  // The VAST document was not readable, so no Error urls exist, thus none are sent.
+                [self.delegate vastError:self error:vastError];
+            }
+            return;
+        }
+        
+        self.eventProcessor = [[VASTEventProcessor alloc] initWithTrackingEvents:[vastModel trackingEvents]];
+        impressions = [vastModel impressions];
+        vastErrors = [vastModel errors];
+        self.clickThrough = [[vastModel clickThrough] url];
+        clickTracking = [vastModel clickTracking];
+        mediaFileURL = [VASTMediaFilePicker pick:[vastModel mediaFiles]].url;
+        if(!mediaFileURL) {
+            [SourceKitLogger debug:[NSString stringWithFormat:@"Error - VASTMediaFilePicker did not find a compatible mediaFile - VASTViewcontroller will not be presented"]];
+            if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
+                [self.delegate vastError:self error:VASTErrorNoCompatibleMediaFile];
+            }
+            if (vastErrors) {
+                [SourceKitLogger debug:@"Sending Error requests"];
+                [self.eventProcessor sendVASTUrlsWithId:vastErrors];
+            }
+            return;
+        }
+        
+        // VAST document parsing OK, player ready to attempt play, so send vastReady
+        [self stopVideoLoadTimeoutTimer];
+        [SourceKitLogger debug:[NSString stringWithFormat:@"Sending vastReady: callback"]];
+        vastReady = YES;
+        [self.delegate vastReady:self];
+    };
+    
+    VAST2Parser *parser = [[VAST2Parser alloc] init];
+    if ([source isKindOfClass:[NSURL class]]) {
+        if (!self.networkCurrentlyReachable) {
+            [SourceKitLogger debug:@"No network available - VASTViewcontroller will not be presented"];
+            if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
+                [self.delegate vastError:self error:VASTErrorNoInternetConnection];  // There is network so no requests can be sent, we don't queue errors, so no external Error event is sent.
+            }
+            return;
+        }
+        [parser parseWithUrl:(NSURL *)source completion:parserCompletionBlock];     // Load the and parse the VAST document at the supplied URL
+    } else {
+        [parser parseWithData:(NSData *)source completion:parserCompletionBlock];   // Parse a VAST document in supplied data
     }
 }
 
-- (void)applicationWillResignActive:(UIApplication *)application
+#pragma mark - View lifecycle
+
+- (void)viewDidAppear:(BOOL)animated
 {
-    if (isPlaying) {
-        [SourceKitLogger debug:@"applicationWillResignActive, pausing player"];
-        [self pausePlay];  // pause if playing
-        backGroundPlayingStateAutoPaused=YES;
+    [super viewDidAppear:animated];
+    isViewOnScreen=YES;
+    if (!hasPlayerStarted) {
+        loadingIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+        loadingIndicator.frame = CGRectMake( (self.view.frame.size.height/2)-25.0, (self.view.frame.size.width/2)-25.0,50,50);
+        [loadingIndicator startAnimating];
+        [self.view addSubview:loadingIndicator];
+    } else {
+        // resuming from background or phone call, so resume if was playing, stay paused if manually paused
+        [self handleResumeState];
     }
-    hasResignedActive=YES;
-    [self stopPlaybackTimer];
 }
+
+-(void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    statusBarHidden = [[UIApplication sharedApplication] isStatusBarHidden];
+    if (SYSTEM_VERSION_LESS_THAN(@"7.0")) {
+        [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationNone];
+    }
+}
+
+-(void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    if (SYSTEM_VERSION_LESS_THAN(@"7.0")) {
+        [[UIApplication sharedApplication] setStatusBarHidden:statusBarHidden withAnimation:UIStatusBarAnimationNone];
+    }
+}
+
+#pragma mark - App lifecycle
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
-    [SourceKitLogger debug:  [NSString stringWithFormat:@"%@", NSStringFromSelector(_cmd)]];
-    if (hasPlayerStarted) {
-        // resuming from background or phone call, so resume if was playing, stay paused if manually paused
-        if (backGroundPlayingStateAutoPaused) {
-            [self pausePlay];  // we were paused, so resume, otherwise do nothing
-            [self startPlaybackTimer];
-            [SourceKitLogger debug:@"applicationDidBecomeActive, resuming player from auto pause"];
-        } else {
-            [SourceKitLogger debug:@"applicationDidBecomeActive, resuming app, currently manually paused"];
-        }
-    }
-    backGroundPlayingStateAutoPaused=NO;
+    [SourceKitLogger debug:@"applicationDidBecomeActive"];
+    [self handleResumeState];
 }
 
-#pragma mark - rotation/orientation
+#pragma mark - MPMoviePlayerController notifications
+
+- (void)playbackStateChangeNotification:(NSNotification *)notification
+{
+    @synchronized (self) {
+        MPMoviePlaybackState state = [self.moviePlayer playbackState];
+        [SourceKitLogger debug:[ NSString stringWithFormat:@"playback state change to %i", state]];
+        
+        switch (state) {
+            case MPMoviePlaybackStateStopped:  // 0
+                [SourceKitLogger debug:@"video stopped"];
+                break;
+            case MPMoviePlaybackStatePlaying:  // 1
+                isPlaying=YES;
+                if (loadingIndicator) {
+                    [loadingIndicator stopAnimating];
+                    [loadingIndicator removeFromSuperview];
+                    loadingIndicator = nil;
+                }
+                if (isViewOnScreen) {
+                    [SourceKitLogger debug:@"video is playing"];
+                    [self startPlaybackTimer];
+                }
+                break;
+            case MPMoviePlaybackStatePaused:  // 2
+                [self stopPlaybackTimer];
+                [SourceKitLogger debug:@"video paused"];
+                isPlaying=NO;
+                break;
+            case MPMoviePlaybackStateInterrupted:  // 3
+                [SourceKitLogger debug:@"video interrupt"];
+                break;
+            case MPMoviePlaybackStateSeekingForward:  // 4
+                [SourceKitLogger debug:@"video seeking forward"];
+                break;
+            case MPMoviePlaybackStateSeekingBackward:  // 5
+                [SourceKitLogger debug:@"video seeking backward"];
+                break;
+            default:
+                [SourceKitLogger warning:@"undefined state change"];
+                break;
+        }
+    }
+}
+
+- (void)moviePlayerLoadStateChanged:(NSNotification *)notification
+{
+    [SourceKitLogger debug:[NSString stringWithFormat:@"movie player load state is %i", self.moviePlayer.loadState]];
+    
+    if ((self.moviePlayer.loadState & MPMovieLoadStatePlaythroughOK) == MPMovieLoadStatePlaythroughOK )
+    {
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:MPMoviePlayerLoadStateDidChangeNotification object:nil];
+        [self showAndPlayVideo];
+    }
+}
+
+- (void)moviePlayBackDidFinish:(NSNotification *)notification
+{
+    @synchronized(self) {
+        [SourceKitLogger debug:@"playback did finish"];
+        
+        NSDictionary* userInfo=[notification userInfo];
+        NSString* error=[userInfo objectForKey:kPlaybackFinishedUserInfoErrorKey];
+        
+        if (error) {
+            [SourceKitLogger debug:[ NSString stringWithFormat:@"playback error:  %@", error]];
+            if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
+                [self.delegate vastError:self error:VASTErrorPlaybackError];
+            }
+            if (vastErrors) {
+                [SourceKitLogger debug:@"Sending Error requests"];
+                [self.eventProcessor sendVASTUrlsWithId:vastErrors];
+            }
+            [self close];
+        } else {
+            // no error, clean finish, so send track complete
+            [self.eventProcessor trackEvent:VASTEventTrackComplete];
+            [self updatePlayedSeconds];
+            [controls showControls];
+            [controls toggleToPlayButton:YES];
+        }
+    }
+}
+
+- (void)movieDuration:(NSNotification *)notification
+{
+    @try {
+        movieDuration = self.moviePlayer.duration;
+    }
+    @catch (NSException *e) {
+        [SourceKitLogger debug:[NSString stringWithFormat:@"Exception - movieDuration: %@", e]];
+        // The movie too short error will fire if movieDuration is < 0.5 or is a NaN value, so no need for further action here.
+    }
+    
+    [SourceKitLogger debug:[ NSString stringWithFormat:@"playback duration is %f", movieDuration]];
+    
+    if (movieDuration < 0.5 || isnan(movieDuration)) {
+        // movie too short - ignore it
+        [SourceKitLogger debug:@"Movie too short - will dismiss player"];
+        if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
+            [self.delegate vastError:self error:VASTErrorMovieTooShort];
+        }
+        if (vastErrors) {
+            [SourceKitLogger debug:@"Sending Error requests"];
+            [self.eventProcessor sendVASTUrlsWithId:vastErrors];
+        }
+        [self close];
+    }
+}
+
+- (void)movieSourceType:(NSNotification *)notification
+{
+    MPMovieSourceType sourceType;
+    @try {
+        sourceType = self.moviePlayer.movieSourceType;
+    }
+    @catch (NSException *e) {
+        [SourceKitLogger debug:[NSString stringWithFormat:@"Exception - movieSourceType: %@", e]];
+        // sourceType is used for info only - any player related error will be handled otherwise, ultimately by videoTimeout, so no other action needed here.
+    }
+    
+    [SourceKitLogger debug:[ NSString stringWithFormat:@"movie source type is %i", sourceType]];
+}
+
+#pragma mark - Orientation handling
 
 // force to always play in Landscape
 - (BOOL)shouldAutorotate
@@ -264,289 +399,14 @@ typedef enum {
     return YES;
 }
 
-#pragma mark - VAST Delegate callbacks
-
-- (void)loadVideoWithURL:(NSURL *)url
-{
-    [self loadVideoUsingSource:url];
-}
-
-- (void)loadVideoWithData:(NSData *)xmlContent
-{
-    [self loadVideoUsingSource:xmlContent];
-}
-
-- (void)loadVideoUsingSource:(id)source
-{
-    [SourceKitLogger debug:([source isKindOfClass:[NSURL class]]?@"Starting loadVideoWithURL":@"Starting loadVideoWithData")];
-    
-    if (isLoadCalled) {
-        [SourceKitLogger debug:@"Ignoring loadVideo because a load is in progress."];
-        return;
-    }
-    isLoadCalled = YES;
-    [self startVideoTimeoutTimer];
-    
-    void (^parserCompletionBlock)(VASTModel *vastModel, VASTError vastError) = ^(VASTModel *vastModel, VASTError vastError) {
-        [SourceKitLogger debug:@"back from block in loadVideoFromData"];
-        if (!vastModel) {
-            [SourceKitLogger debug:@"parser error"];
-            if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {  // The VAST document was not readable, so no Error urls exist, thus none are sent.
-                [self.delegate vastError:self error:vastError];
-            }
-            [self dismiss];
-            return;
-        }
-        
-        self.eventProcessor = [[VASTEventProcessor alloc] initWithTrackingEvents:[vastModel trackingEvents]];
-        NSArray *impresssions = [vastModel impressions];
-        if (impresssions) {
-            [SourceKitLogger debug:@"Sending Impresssions requests"];
-            [self.eventProcessor sendVASTUrlsWithId:[vastModel impressions]];
-        }
-        vastErrors = [vastModel errors];
-        self.clickThrough = [[vastModel clickThrough] url];
-        clickTracking = [vastModel clickTracking];
-        mediaFileURL = [VASTMediaFilePicker pick:[vastModel mediaFiles]].url;
-        if(!mediaFileURL) {
-        [SourceKitLogger debug:[NSString stringWithFormat:@"Error - VASTMediaFilePicker did not find a compatible mediaFile - VASTViewcontroller will not be presented"]];
-            if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
-                [self.delegate vastError:self error:VASTErrorNoCompatibleMediaFile];
-            }
-            if (vastErrors) {
-                [SourceKitLogger debug:@"Sending Error requests"];
-                [self.eventProcessor sendVASTUrlsWithId:vastErrors];
-            }
-            [self dismiss];
-            return;
-        }
-        [self initializeAndPreparePlayer];
-    };
-    
-    VAST2Parser *parser = [[VAST2Parser alloc] init];
-     if ([source isKindOfClass:[NSURL class]]) {
-        if (!self.networkCurrentlyReachable) {
-            [SourceKitLogger debug:@"No network available - VASTViewcontroller will not be presented"];
-            if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
-                [self.delegate vastError:self error:VASTErrorNoInternetConnection];  // There is network so no requests can be sent, we don't queue errors, so no external Error event is sent.
-            }
-            [self dismiss];
-            return;
-        }
-        [parser parseWithUrl:(NSURL *)source completion:parserCompletionBlock];     // Load the and parse the VAST document at the supplied URL
-    } else {
-        [parser parseWithData:(NSData *)source completion:parserCompletionBlock];   // Parse a VAST document in supplied data
-    }
-}
-
-- (void)playVideo
-{
-    [SourceKitLogger debug:@"playVideo"];
-    
-    if (!vastReady) {
-        if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
-            [self.delegate vastError:self error:VASTErrorPlayerNotReady];                  // This is not a VAST player error, so no external Error event is sent.
-            [SourceKitLogger debug:@"Ignoring call to playVideo before the player has sent vastReady."];
-            return;
-        }
-    }
-    
-    if (isViewOnScreen) {
-        if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
-            [self.delegate vastError:self error:VASTErrorPlaybackAlreadyInProgress];       // This is not a VAST player error, so no external Error event is sent.
-            [SourceKitLogger debug:@"Ignoring call to playVideo while playback is already in progress"];
-            return;
-        }
-    }
-    
-    if (!self.networkCurrentlyReachable) {
-        [SourceKitLogger debug:@"No network available - VASTViewcontroller will not be presented"];
-        if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
-            [self.delegate vastError:self error:VASTErrorNoInternetConnection];   // There is network so no requests can be sent, we don't queue errors, so no external Error event is sent.
-        }
-        [self dismiss];
-        return;
-    } else {
-        [SourceKitLogger debug:@"Network available - presenting VASTViewcontroller"];
-    }
-    
-    if ([self.delegate respondsToSelector:@selector(vastWillPresentFullScreen:)]) {
-        [self.delegate vastWillPresentFullScreen:self];
-    }
-    
-    id rootViewController = [[UIApplication sharedApplication] keyWindow].rootViewController;
-    if ([rootViewController respondsToSelector:@selector(presentViewController:animated:completion:)]) {
-        // used if running >= iOS 6
-        [rootViewController presentViewController:self animated:YES completion:nil];
-    } else {
-        // Turn off the warning about using a deprecated method.
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-        [rootViewController presentModalViewController:self animated:YES];
-#pragma clang diagnostic pop
-    }
-}
-
-- (void)showAndPlayVideo
-{
-    [SourceKitLogger debug:[NSString stringWithFormat:@"adding player to on screen view and starting play sequence"]];
-    
-    self.moviePlayer.view.frame=self.view.bounds;
-    [self.view addSubview:self.moviePlayer.view];
-    
-    // N.B. The player has to be ready to play before controls may be added to the player's view
-    [SourceKitLogger debug:@"initializing player controls"];
-    controls = [[VASTControls alloc] initWithVASTPlayer:self];
-    [self.moviePlayer.view addSubview: controls.view];
-    [controls showControls];
-
-    hasPlayerStarted=YES;
-    
-    @try {
-        [SourceKitLogger debug:[NSString stringWithFormat:@"Playing aspect fit full screen video (natural size %4.0fw x %4.0fh)",self.moviePlayer.naturalSize.width, self.moviePlayer.naturalSize.height]];
-        [self.moviePlayer play];
-    }
-    @catch (NSException *e) {
-        [SourceKitLogger debug:[NSString stringWithFormat:@"Exception - [self.moviePlayer play]: %@", e]];
-        if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
-            [self.delegate vastError:self error:VASTErrorPlaybackError];
-        }
-        if (vastErrors) {
-            [SourceKitLogger debug:@"Sending Error requests"];
-            [self.eventProcessor sendVASTUrlsWithId:vastErrors];
-        }
-        [self dismiss];
-        return;
-    }
-    
-    [self startPlaybackTimer];
-    [self.eventProcessor trackEvent:VASTEventTrackStart];
-    [self setUpTapGestureRecognizer];
-}
-
-#pragma mark - MPMoviePlayerController notifications
-
-- (void)playbackStateChangeNotification:(NSNotification *)notification
-{
-    @synchronized (self) {
-        MPMoviePlaybackState state = [self.moviePlayer playbackState];
-        [SourceKitLogger debug:[ NSString stringWithFormat:@"playback state change to %i", state]];
-        
-        switch (state) {
-            case MPMoviePlaybackStateStopped:  // 0
-                [SourceKitLogger debug:@"video stopped"];
-                break;
-            case MPMoviePlaybackStatePlaying:  // 1
-                isPlaying=YES;
-                [controls toggleToPlayButton:NO];
-                if (!hasResignedActive && !isViewOnScreen) {
-                    [self stopVideoTimeoutTimer];
-                    [SourceKitLogger debug:[NSString stringWithFormat:@"Sending vastReady: callback"]];
-                    vastReady = YES;
-                    [self.delegate vastReady:self];
-                }
-                if (isViewOnScreen) {
-                    [SourceKitLogger debug:@"video is playing"];
-                    [self startPlaybackTimer];
-                }
-                break;
-            case MPMoviePlaybackStatePaused:  // 2
-                [self stopPlaybackTimer];
-                [SourceKitLogger debug:@"video paused"];
-                isPlaying=NO;
-                [controls toggleToPlayButton:YES];
-                break;
-            case MPMoviePlaybackStateInterrupted:  // 3
-                [SourceKitLogger debug:@"video interrupt"];
-                break;
-            case MPMoviePlaybackStateSeekingForward:  // 4
-                [SourceKitLogger debug:@"video seeking forward"];
-                break;
-            case MPMoviePlaybackStateSeekingBackward:  // 5
-                [SourceKitLogger debug:@"video seeking backward"];
-                break;
-            default:
-                [SourceKitLogger warning:@"undefined state change"];
-                break;
-        }
-    }
-}
-
-- (void) moviePlayBackDidFinish:(NSNotification *)notification
-{
-    [SourceKitLogger debug:@"playback did finish"];
-    
-    NSDictionary* userInfo=[notification userInfo];
-    [SourceKitLogger debug:[ NSString stringWithFormat:@"user info:  %@", userInfo]];
-    
-    NSString* error=[userInfo objectForKey:kPlaybackFinishedUserInfoErrorKey];
-    
-    if (error) {
-        [SourceKitLogger debug:[ NSString stringWithFormat:@"playback error:  %@", error]];
-        if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
-            [self.delegate vastError:self error:VASTErrorPlaybackError];
-        }
-        if (vastErrors) {
-            [SourceKitLogger debug:@"Sending Error requests"];
-            [self.eventProcessor sendVASTUrlsWithId:vastErrors];
-        }
-        [self dismiss];
-    } else {
-        // no error, clean finish, so send track complete
-        [self.eventProcessor trackEvent:VASTEventTrackComplete];
-        [self updatePlayedSeconds];
-        [controls showControls];
-        [controls toggleToPlayButton:YES];
-    }
-}
-
-- (void)movieDuration:(NSNotification *)notification
-{
-    @try {
-        movieDuration = self.moviePlayer.duration;
-    }
-    @catch (NSException *e) {
-        [SourceKitLogger debug:[NSString stringWithFormat:@"Exception - movieDuration: %@", e]];
-        // The movie too short error will fire if movieDuration is < 0.5 or is a NaN value, so no need for further action here.
-    }
-    
-    [SourceKitLogger debug:[ NSString stringWithFormat:@"playback duration is %f", movieDuration]];
-    
-    if (movieDuration < 0.5 || isnan(movieDuration)) {
-        // movie too short - ignore it
-        [SourceKitLogger debug:@"Movie too short - will dismiss player"];
-        if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
-            [self.delegate vastError:self error:VASTErrorMovieTooShort];
-        }
-        if (vastErrors) {
-            [SourceKitLogger debug:@"Sending Error requests"];
-            [self.eventProcessor sendVASTUrlsWithId:vastErrors];
-        }
-        [self dismiss];
-    }
-}
-
-- (void)movieSourceType:(NSNotification *)notification
-{
-    MPMovieSourceType sourceType;
-    @try {
-        sourceType = self.moviePlayer.movieSourceType;
-    }
-    @catch (NSException *e) {
-        [SourceKitLogger debug:[NSString stringWithFormat:@"Exception - movieSourceType: %@", e]];
-        // sourceType is used for info only - any player related error will be handled otherwise, ultimately by videoTimeout, so no other action needed here.
-    }
-    
-    [SourceKitLogger debug:[ NSString stringWithFormat:@"move source type is %i", sourceType]];
-}
-
-#pragma mark - timers
+#pragma mark - Timers
 
 // playbackTimer - keeps track of currentPlayedPercentage
 - (void)startPlaybackTimer
 {
     @synchronized (self) {
         [self stopPlaybackTimer];
+        [SourceKitLogger debug:@"start playback timer"];
         playbackTimer = [NSTimer scheduledTimerWithTimeInterval:kPlayTimeCounterInterval
                                                          target:self
                                                        selector:@selector(updatePlayedSeconds)
@@ -557,6 +417,7 @@ typedef enum {
 
 - (void)stopPlaybackTimer
 {
+    [SourceKitLogger debug:@"stop playback timer"];
     [playbackTimer invalidate];
     playbackTimer = nil;
 }
@@ -583,24 +444,23 @@ typedef enum {
                 [SourceKitLogger debug:@"Sending Error requests"];
                 [self.eventProcessor sendVASTUrlsWithId:vastErrors];
             }
-            [self dismiss];
+            [self close];
         }
         [self.videoHangTest removeObjectAtIndex:0];   // remove oldest number from start of hang test buffer
     }
     
    	currentPlayedPercentage = (float)100.0*(playedSeconds/movieDuration);
     [controls updateProgressBar: currentPlayedPercentage/100.0 withPlayedSeconds:playedSeconds withTotalDuration:movieDuration];
-//    [SourceKitLogger debug: [ NSString stringWithFormat:@"movie has played %.1f%%", currentPlayedPercentage]];
     
     switch (currentQuartile) {
- 
+            
         case VASTFirstQuartile:
             if (currentPlayedPercentage>25.0) {
                 [self.eventProcessor trackEvent:VASTEventTrackFirstQuartile];
                 currentQuartile=VASTSecondQuartile;
             }
             break;
-        
+            
         case VASTSecondQuartile:
             if (currentPlayedPercentage>50.0) {
                 [self.eventProcessor trackEvent:VASTEventTrackMidpoint];
@@ -614,32 +474,32 @@ typedef enum {
                 currentQuartile=VASTFourtQuartile;
             }
             break;
-  
+            
         default:
             break;
     }
 }
 
-// videoTimeoutTimer - dimisses VASTViewController if video times out while loading
-- (void)startVideoTimeoutTimer
+// Reports error if vast video document times out while loading
+- (void)startVideoLoadTimeoutTimer
 {
-    [self stopVideoTimeoutTimer];
-    videoTimeoutTimer = [NSTimer scheduledTimerWithTimeInterval:kVideoTimoutInterval
-                                                     target:self
-                                                   selector:@selector(videoTimeout)
-                                                   userInfo:nil
-                                                    repeats:NO];
+    [self stopVideoLoadTimeoutTimer];
+    videoLoadTimeoutTimer = [NSTimer scheduledTimerWithTimeInterval:kVideoLoadTimeoutInterval
+                                                             target:self
+                                                           selector:@selector(videoLoadTimeout)
+                                                           userInfo:nil
+                                                            repeats:NO];
 }
 
-- (void)stopVideoTimeoutTimer
+- (void)stopVideoLoadTimeoutTimer
 {
-    [videoTimeoutTimer invalidate];
-    videoTimeoutTimer = nil;
+    [videoLoadTimeoutTimer invalidate];
+    videoLoadTimeoutTimer = nil;
 }
 
-- (void)videoTimeout
+- (void)videoLoadTimeout
 {
-    [SourceKitLogger debug:@"Video Timeout"];
+    [SourceKitLogger debug:@"Video Load Timeout"];
     if (vastErrors) {
         [SourceKitLogger debug:@"Sending Error requests"];
         [self.eventProcessor sendVASTUrlsWithId:vastErrors];
@@ -647,17 +507,88 @@ typedef enum {
     if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
         [self.delegate vastError:self error:VASTErrorLoadTimeout];
     }
-    [self dismiss];
 }
 
-- (void)killTimers {
+- (void)killTimers
+{
     [self stopPlaybackTimer];
-    [self stopVideoTimeoutTimer];
+    [self stopVideoLoadTimeoutTimer];
+}
+
+#pragma mark - Methods needed to support toolbar buttons
+
+- (void)play
+{
+    @synchronized (self) {
+        [SourceKitLogger debug:@"playVideo"];
+        
+        if (!vastReady) {
+            if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
+                [self.delegate vastError:self error:VASTErrorPlayerNotReady];                  // This is not a VAST player error, so no external Error event is sent.
+                [SourceKitLogger debug:@"Ignoring call to playVideo before the player has sent vastReady."];
+                return;
+            }
+        }
+        
+        if (isViewOnScreen) {
+            if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
+                [self.delegate vastError:self error:VASTErrorPlaybackAlreadyInProgress];       // This is not a VAST player error, so no external Error event is sent.
+                [SourceKitLogger debug:@"Ignoring call to playVideo while playback is already in progress"];
+                return;
+            }
+        }
+        
+        if (!self.networkCurrentlyReachable) {
+            [SourceKitLogger debug:@"No network available - VASTViewcontroller will not be presented"];
+            if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
+                [self.delegate vastError:self error:VASTErrorNoInternetConnection];   // There is network so no requests can be sent, we don't queue errors, so no external Error event is sent.
+            }
+            return;
+        }
+        
+        // Now we are ready to launch the player and start buffering the content
+        // It will throw error if the url is invalid for any reason. In this case, we don't even need to open ViewController.
+        [SourceKitLogger debug:@"initializing player"];
+        
+        @try {
+            playedSeconds = 0.0;
+            currentPlayedPercentage = 0.0;
+            
+            // Create and prepare the player to confirm the video is playable (or not) as early as possible
+            self.moviePlayer = [[MPMoviePlayerController alloc] initWithContentURL: mediaFileURL];
+            self.moviePlayer.shouldAutoplay = NO; // YES by default - But we don't want to autoplay
+            self.moviePlayer.controlStyle=MPMovieControlStyleNone;  // To use custom control toolbar
+            [self.moviePlayer prepareToPlay];
+            [self presentPlayer];
+        }
+        @catch (NSException *e) {
+            [SourceKitLogger debug:[NSString stringWithFormat:@"Exception - moviePlayer.prepareToPlay: %@", e]];
+            if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
+                [self.delegate vastError:self error:VASTErrorPlaybackError];
+            }
+            if (vastErrors) {
+                [SourceKitLogger debug:@"Sending Error requests"];
+                [self.eventProcessor sendVASTUrlsWithId:vastErrors];
+            }
+            return;
+        }
+    }
+}
+
+- (void)pause
+{
+    [SourceKitLogger debug:@"pause"];
+    [self handlePauseState];
+}
+
+- (void)resume
+{
+    [SourceKitLogger debug:@"resume"];
+    [self handleResumeState];
 }
 
 - (void)info
 {
-    [SourceKitLogger debug:  [NSString stringWithFormat:@"%@", NSStringFromSelector(_cmd)]];
     if (clickTracking) {
         [SourceKitLogger debug:@"Sending clickTracking requests"];
         [self.eventProcessor sendVASTUrlsWithId:clickTracking];
@@ -667,44 +598,32 @@ typedef enum {
     }
 }
 
-- (void)pausePlay
-{
-    [SourceKitLogger debug:  [NSString stringWithFormat:@"%@", NSStringFromSelector(_cmd)]];
-    if (isPlaying) {
-        [self.moviePlayer pause];
-        [SourceKitLogger debug:@"Pausing video playback"];
-        isPlaying = NO;
-        [self.eventProcessor trackEvent:VASTEventTrackPause];
-    } else {
-        [self.moviePlayer play];
-        [SourceKitLogger debug:@"Resuming video playback"];
-        isPlaying = YES;
-        [self.eventProcessor trackEvent:VASTEventTrackResume];
-    }
-}
-
-- (void)dismiss
+- (void)close
 {
     @synchronized (self) {
+        [self.moviePlayer stop];
         [self removeObservers];
         [self killTimers];
-        self.moviePlayer=nil;
         
-        [SourceKitLogger debug:  [NSString stringWithFormat:@"%@", NSStringFromSelector(_cmd)]];
+        self.moviePlayer=nil;
         
         if (isViewOnScreen) {
             // send close any time the player has been dismissed
             [self.eventProcessor trackEvent:VASTEventTrackClose];
             [SourceKitLogger debug:@"Dismissing VASTViewController"];
-            [self dismissViewControllerAnimated:YES completion:nil];
+            [self dismissViewControllerAnimated:NO completion:nil];
+            
+            if ([self.delegate respondsToSelector:@selector(vastDidDismissFullScreen:)]) {
+                [self.delegate vastDidDismissFullScreen:self];
+            }
         }
     }
 }
 
 //
-// handle touches
+// Handle touches
 //
-#pragma mark - gesture delegate
+#pragma mark - Gesture setup & delegate
 
 - (void)setUpTapGestureRecognizer
 {
@@ -715,11 +634,13 @@ typedef enum {
     [self.view addGestureRecognizer:self.touchGestureRecognizer];
 }
 
-- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch {
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch
+{
     return YES;
 }
 
-- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer
+{
     return YES;
 }
 
@@ -734,7 +655,7 @@ typedef enum {
 {
     reachabilityForVAST = [Reachability reachabilityForInternetConnection];
     reachabilityForVAST.reachableOnWWAN = YES;            // Do allow 3G/WWAN for reachablity
- 
+    
     __unsafe_unretained VASTViewController *self_ = self; // avoid block retain cycle
     
     networkReachableBlock  = ^(Reachability*reachabilityForVAST){
@@ -753,6 +674,97 @@ typedef enum {
     [reachabilityForVAST startNotifier];
     self.networkCurrentlyReachable = [reachabilityForVAST isReachable];
     [SourceKitLogger debug:[NSString stringWithFormat:@"Network is reachable %d", self.networkCurrentlyReachable]];
+}
+
+#pragma mark - Other methods
+
+- (BOOL)isPlaying
+{
+    return isPlaying;
+}
+
+- (void)showAndPlayVideo
+{
+    [SourceKitLogger debug:[NSString stringWithFormat:@"adding player to on screen view and starting play sequence"]];
+    
+    self.moviePlayer.view.frame=self.view.bounds;
+    [self.view addSubview:self.moviePlayer.view];
+    
+    // N.B. The player has to be ready to play before controls may be added to the player's view
+    [SourceKitLogger debug:@"initializing player controls"];
+    controls = [[VASTControls alloc] initWithVASTPlayer:self];
+    [self.moviePlayer.view addSubview: controls.view];
+    [controls showControls];
+    
+    [self.moviePlayer play];
+    hasPlayerStarted=YES;
+    
+    if (impressions) {
+        [SourceKitLogger debug:@"Sending Impressions requests"];
+        [self.eventProcessor sendVASTUrlsWithId:impressions];
+    }
+    [self.eventProcessor trackEvent:VASTEventTrackStart];
+    [self setUpTapGestureRecognizer];
+}
+
+- (void)removeObservers
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:MPMoviePlayerPlaybackStateDidChangeNotification object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:MPMoviePlayerPlaybackDidFinishNotification object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:MPMovieDurationAvailableNotification object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:MPMovieSourceTypeAvailableNotification object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:MPMoviePlayerLoadStateDidChangeNotification object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationDidBecomeActiveNotification object:nil];
+}
+
+- (void)handlePauseState
+{
+    @synchronized (self) {
+    if (isPlaying) {
+        [SourceKitLogger debug:@"handle pausing player"];
+        [self.moviePlayer pause];
+        isPlaying = NO;
+        [self.eventProcessor trackEvent:VASTEventTrackPause];
+    }
+    [self stopPlaybackTimer];
+    }
+}
+
+- (void)handleResumeState
+{
+    @synchronized (self) {
+    if (hasPlayerStarted) {
+        if (![controls controlsPaused]) {
+        // resuming from background or phone call, so resume if was playing, stay paused if manually paused by inspecting controls state
+        [SourceKitLogger debug:@"handleResumeState, resuming player"];
+        [self.moviePlayer play];
+        isPlaying = YES;
+        [self.eventProcessor trackEvent:VASTEventTrackResume];
+        [self startPlaybackTimer];
+        }
+    } else if (self.moviePlayer) {
+        [self showAndPlayVideo];   // Edge case: loadState is playable but not playThroughOK and had resignedActive, so play immediately on resume
+    }
+    }
+}
+
+- (void)presentPlayer
+{
+    if ([self.delegate respondsToSelector:@selector(vastWillPresentFullScreen:)]) {
+        [self.delegate vastWillPresentFullScreen:self];
+    }
+    
+    id rootViewController = [[UIApplication sharedApplication] keyWindow].rootViewController;
+    if ([rootViewController respondsToSelector:@selector(presentViewController:animated:completion:)]) {
+        // used if running >= iOS 6
+        [rootViewController presentViewController:self animated:NO completion:nil];
+    } else {
+        // Turn off the warning about using a deprecated method.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        [rootViewController presentModalViewController:self animated:NO];
+#pragma clang diagnostic pop
+    }
 }
 
 @end

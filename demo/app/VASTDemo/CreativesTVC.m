@@ -22,7 +22,7 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    [tableView deselectRowAtIndexPath:indexPath animated:NO];
     
     // Cleanup vastVC if it was used before
     if (vastVC) {
@@ -48,7 +48,7 @@
 - (void)vastReady:(VASTViewController *)vc
 {
     NSLog(@"callback %@", NSStringFromSelector(_cmd));
-    [vc playVideo];
+    [vc play];
 }
 
 - (void)vastWillPresentFullScreen:(VASTViewController *)vc;

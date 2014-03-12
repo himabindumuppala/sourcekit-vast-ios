@@ -29,7 +29,7 @@
     [super viewDidLoad];
 	
     // Fill version string
-    [self.versionLabel setText:[NSString stringWithFormat:@"VAST SourceKit v%2.1f & Demo v%@", kKitVersion, [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"]]];
+    [self.versionLabel setText:[NSString stringWithFormat:@"VAST SourceKit v%@ & Demo v%@", kKitVersion, [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"]]];
 }
 
 - (void)didReceiveMemoryWarning

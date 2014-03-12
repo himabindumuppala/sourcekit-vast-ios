@@ -15,8 +15,9 @@
 @interface VASTControls : UIViewController
 
 - (id)initWithVASTPlayer:(VASTViewController *)vastPlayer;       // designated initializer
-- (void)toggleToPlayButton:(BOOL)toggleToPlay;                   // toggle the pause/play button to 'play'
+- (void)toggleToPlayButton:(BOOL)toggleToPlay;                   // toggle the pause/play button YES=play, NO=pause
 - (void)showControls;                                            // showControls, used by VASTViewController, for example at initial start of playback
 - (void)updateProgressBar:(float)progress withPlayedSeconds:(float)playedSeconds withTotalDuration:(float)totalDuration;   // update the progress bar with the supplied value
+- (BOOL)controlsPaused;                                          // used by the player to detect manual pause
 
 @end

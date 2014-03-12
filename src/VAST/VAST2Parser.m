@@ -62,8 +62,6 @@ static int kMaxRecursiveDepth = 5;
 
 - (VASTError)parseRecursivelyWithData:(NSData *)vastData depth:(int)depth
 {
-    [SourceKitLogger debug:[NSString stringWithFormat: @"%@ %@%d", [self.class description], NSStringFromSelector(_cmd), depth]];
-    
     if (depth >= kMaxRecursiveDepth) {
         vastModel = nil;
         return VASTErrorTooManyWrappers;

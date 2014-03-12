@@ -10,4 +10,4 @@
 #import "VASTError.h"
 #import "VASTViewController.h"
 
-#define kKitVersion 1.0
+#define kKitVersion @"1.0.1"

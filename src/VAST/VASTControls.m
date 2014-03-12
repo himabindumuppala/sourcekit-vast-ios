@@ -33,7 +33,7 @@ static const float kControlsToolbarHeight = 44.0;
 
 - (IBAction)pausePlay:(id)sender;
 - (IBAction)info:(id)sender;
-- (IBAction)dimiss:(id)sender;
+- (IBAction)stopButtonTouched:(id)sender;
 
 @end
 
@@ -52,7 +52,7 @@ static const float kControlsToolbarHeight = 44.0;
         _player = vastPlayer;
         self.view.frame = controlToolbar.frame;
         [self.view addSubview:controlToolbar];
-        [self toggleToPlayButton:NO]; // initialize to pause, because the player starts playing immediately
+        [self toggleToPlayButton:NO];
         self.view.frame = CGRectMake(0, vastPlayer.view.bounds.size.height-self.view.frame.size.height, vastPlayer.view.bounds.size.width, self.view.frame.size.height);
         
         if (!vastPlayer.clickThrough) {
@@ -76,27 +76,25 @@ static const float kControlsToolbarHeight = 44.0;
             [self updateProgressBar:0 withPlayedSeconds:0 withTotalDuration:0];
             [self.view addSubview:progressBar];
         }
-        
     }
     return self;
 }
 
-
-- (void)viewDidLoad
-{
-    [super viewDidLoad];
-	// Do any additional setup after loading the view.
-}
-
-- (void)didReceiveMemoryWarning
-{
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
-}
-
 - (IBAction)pausePlay:(id)sender
 {
-    [self.player pausePlay];
+    if ([self.player isPlaying]) {
+        [self.player pause];
+        [self toggleToPlayButton:YES];
+    }
+    else {
+        [self toggleToPlayButton:NO];
+        [self.player resume];
+    }
+}
+
+- (BOOL)controlsPaused
+{
+    return [controlToolbar.items containsObject:playButton];
 }
 
 - (IBAction)info:(id)sender
@@ -104,9 +102,9 @@ static const float kControlsToolbarHeight = 44.0;
     [self.player info];
 }
 
-- (IBAction)dimiss:(id)sender
+- (IBAction)stopButtonTouched:(id)sender
 {
-    [self.player dismiss];
+    [self.player close];
 }
 
 -(void)toggleToPlayButton:(BOOL)toggleToPlay

@@ -51,11 +51,13 @@
 
 - (void)loadVideoWithURL:(NSURL *)url;            // load and prepare to play a VAST video from a URL
 - (void)loadVideoWithData:(NSData *)xmlContent;   // load and prepare to play a VAST video from existing XML data
-- (void)playVideo;                                // command to play the video, this is only valid after receiving the vastReady: callback
 
 // These actions are called by the VASTControls toolbar; the are exposed to enable an alternative custom VASTControls toolbar
-- (void)dismiss;                       // dismisses a video playing on screen
-- (void)info;                          // callback to host class for opening a browser to the URL specified in 'clickthrough'
-- (void)pausePlay;                     // pauses or plays the video; also used automatically when the app resigns or becomes active
+- (void)play;                        // command to play the video, this is only valid after receiving the vastReady: callback
+- (void)pause;                       // pause the video, useful when modally presenting a browser, for example
+- (void)resume;                      // resume the video, useful when modally dismissing a browser, for example
+- (void)info;                        // callback to host class for opening a browser to the URL specified in 'clickthrough'
+- (void)close;                       // dismisses a video playing on screen
+- (BOOL)isPlaying;                   // playing state
 
 @end

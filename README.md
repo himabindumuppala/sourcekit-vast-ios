@@ -27,6 +27,8 @@ Step 2: Copy or include the following header files into your project;
 
 	SourceKitLogger.h
 	VAST.h
+	VASTError.h
+	VASTViewController.h
 	
 Step 3: Import these header files into the class which will use a VASTViewController (step 7):
 
@@ -55,7 +57,7 @@ Step 8: Listen for VASTViewControllerDelegate callbacks. Please look into VASTVi
 
 	- (void)vastReady:(VASTViewController *)vc
 	{
-    	[vc playVideo];
+    	[vc play];
 	}
 
 Step 9: (Optional) To see logging:
