@@ -10,6 +10,7 @@ written in Objective-C and works in both iPhone and iPad applications.
 - Handles VAST & VAST Wrapper
 - 4 level logging
 - Integrates with just a few lines of code
+- Optionally choose to validate XML with libxml
 - ARC support
 
 **Requirements:**
