@@ -1,30 +1,28 @@
 //
-//  VASTViewController.m
+//  SKVASTViewController.m
 //  VAST
 //
 //  Created by Thomas Poland on 9/30/13.
 //  Copyright (c) 2013 Nexage. All rights reserved.
 //
 
-#import "VASTViewController.h"
+#import "SKVASTViewController.h"
 #import <MediaPlayer/MediaPlayer.h>
 #import <netdb.h>
-#import "SourceKitLogger.h"
-#import "VAST2Parser.h"
-#import "VASTModel.h"
-#import "VASTEventProcessor.h"
-#import "VASTUrlWithId.h"
-#import "VASTMediaFile.h"
-#import "VASTControls.h"
-#import "VASTMediaFilePicker.h"
-#import "Reachability.h"
+#import "VASTSettings.h"
+#import "SKLogger.h"
+#import "SKVAST2Parser.h"
+#import "SKVASTModel.h"
+#import "SKVASTEventProcessor.h"
+#import "SKVASTUrlWithId.h"
+#import "SKVASTMediaFile.h"
+#import "SKVASTControls.h"
+#import "SKVASTMediaFilePicker.h"
+#import "SKReachability.h"
 
 #define SYSTEM_VERSION_LESS_THAN(v)     ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedAscending)
 
-static const float kPlayTimeCounterInterval = 0.25;
-static const float kVideoLoadTimeoutInterval = 10.0;
 static const NSString* kPlaybackFinishedUserInfoErrorKey=@"error";
-static const float kControlsToolbarHeight=44.0;
 
 typedef enum {
     VASTFirstQuartile,
@@ -33,19 +31,19 @@ typedef enum {
     VASTFourtQuartile,
 } CurrentVASTQuartile;
 
-@interface VASTViewController() <UIGestureRecognizerDelegate>
+@interface SKVASTViewController() <UIGestureRecognizerDelegate>
 {
     NSURL *mediaFileURL;
     NSArray *clickTracking;
     NSArray *vastErrors;
     NSArray *impressions;
     NSTimer *playbackTimer;
-    NSTimer *controlsTimer;
+    NSTimer *initialDelayTimer;
     NSTimer *videoLoadTimeoutTimer;
     NSTimeInterval movieDuration;
     NSTimeInterval playedSeconds;
     
-    VASTControls *controls;
+    SKVASTControls *controls;
     
     float currentPlayedPercentage;
     BOOL isPlaying;
@@ -57,20 +55,20 @@ typedef enum {
     CurrentVASTQuartile currentQuartile;
     UIActivityIndicatorView *loadingIndicator;
     
-    Reachability *reachabilityForVAST;
+    SKReachability *reachabilityForVAST;
     NetworkReachable networkReachableBlock;
     NetworkUnreachable networkUnreachableBlock;
 }
 
 @property(nonatomic, strong) MPMoviePlayerController *moviePlayer;
 @property(nonatomic, strong) UITapGestureRecognizer *touchGestureRecognizer;
-@property(nonatomic, strong) VASTEventProcessor *eventProcessor;
+@property(nonatomic, strong) SKVASTEventProcessor *eventProcessor;
 @property(nonatomic, strong) NSMutableArray *videoHangTest;
 @property(nonatomic, assign) BOOL networkCurrentlyReachable;
 
 @end
 
-@implementation VASTViewController
+@implementation SKVASTViewController
 
 #pragma mark - Init & dealloc
 
@@ -80,7 +78,7 @@ typedef enum {
 }
 
 // designated initializer
-- (id)initWithDelegate:(id<VASTViewControllerDelegate>)delegate;
+- (id)initWithDelegate:(id<SKVASTViewControllerDelegate>)delegate;
 {
     self = [super init];
     if (self) {
@@ -143,54 +141,64 @@ typedef enum {
 
 - (void)loadVideoUsingSource:(id)source
 {
-    [SourceKitLogger debug:([source isKindOfClass:[NSURL class]]?@"Starting loadVideoWithURL":@"Starting loadVideoWithData")];
+    if ([source isKindOfClass:[NSURL class]])
+    {
+        [SKLogger debug:@"VAST - View Controller" withMessage:@"Starting loadVideoWithURL"];
+    } else {
+        [SKLogger debug:@"VAST - View Controller" withMessage:@"Starting loadVideoWithData"];
+    }
     
     if (isLoadCalled) {
-        [SourceKitLogger debug:@"Ignoring loadVideo because a load is in progress."];
+        [SKLogger debug:@"VAST - View Controller" withMessage:@"Ignoring loadVideo because a load is in progress."];
         return;
     }
     isLoadCalled = YES;
     [self startVideoLoadTimeoutTimer];
     
-    void (^parserCompletionBlock)(VASTModel *vastModel, VASTError vastError) = ^(VASTModel *vastModel, VASTError vastError) {
-        [SourceKitLogger debug:@"back from block in loadVideoFromData"];
+    void (^parserCompletionBlock)(SKVASTModel *vastModel, SKVASTError vastError) = ^(SKVASTModel *vastModel, SKVASTError vastError) {
+        [SKLogger debug:@"VAST - View Controller" withMessage:@"back from block in loadVideoFromData"];
+        
         if (!vastModel) {
-            [SourceKitLogger debug:@"parser error"];
+            [SKLogger error:@"VAST - View Controller" withMessage:@"parser error"];
             if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {  // The VAST document was not readable, so no Error urls exist, thus none are sent.
                 [self.delegate vastError:self error:vastError];
             }
+            [self stopVideoLoadTimeoutTimer];
             return;
         }
         
-        self.eventProcessor = [[VASTEventProcessor alloc] initWithTrackingEvents:[vastModel trackingEvents]];
+        self.eventProcessor = [[SKVASTEventProcessor alloc] initWithTrackingEvents:[vastModel trackingEvents] withDelegate:_delegate];
         impressions = [vastModel impressions];
         vastErrors = [vastModel errors];
         self.clickThrough = [[vastModel clickThrough] url];
         clickTracking = [vastModel clickTracking];
-        mediaFileURL = [VASTMediaFilePicker pick:[vastModel mediaFiles]].url;
+        mediaFileURL = [SKVASTMediaFilePicker pick:[vastModel mediaFiles]].url;
+        
+        // Stop the timer so that it won't trigger timeout errors for both success and failure
+        [self stopVideoLoadTimeoutTimer];
+
         if(!mediaFileURL) {
-            [SourceKitLogger debug:[NSString stringWithFormat:@"Error - VASTMediaFilePicker did not find a compatible mediaFile - VASTViewcontroller will not be presented"]];
+            [SKLogger error:@"VAST - View Controller" withMessage:@"Error - VASTMediaFilePicker did not find a compatible mediaFile - VASTViewcontroller will not be presented"];
             if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
                 [self.delegate vastError:self error:VASTErrorNoCompatibleMediaFile];
             }
             if (vastErrors) {
-                [SourceKitLogger debug:@"Sending Error requests"];
+                [SKLogger debug:@"VAST - View Controller" withMessage:@"Sending Error requests"];
                 [self.eventProcessor sendVASTUrlsWithId:vastErrors];
             }
             return;
         }
         
         // VAST document parsing OK, player ready to attempt play, so send vastReady
-        [self stopVideoLoadTimeoutTimer];
-        [SourceKitLogger debug:[NSString stringWithFormat:@"Sending vastReady: callback"]];
+        [SKLogger debug:@"VAST - View Controller" withMessage:@"Sending vastReady: callback"];
         vastReady = YES;
         [self.delegate vastReady:self];
     };
     
-    VAST2Parser *parser = [[VAST2Parser alloc] init];
+    SKVAST2Parser *parser = [[SKVAST2Parser alloc] init];
     if ([source isKindOfClass:[NSURL class]]) {
         if (!self.networkCurrentlyReachable) {
-            [SourceKitLogger debug:@"No network available - VASTViewcontroller will not be presented"];
+            [SKLogger error:@"VAST - View Controller" withMessage:[NSString stringWithFormat:@"No network available - VASTViewcontroller will not be presented"]];
             if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
                 [self.delegate vastError:self error:VASTErrorNoInternetConnection];  // There is network so no requests can be sent, we don't queue errors, so no external Error event is sent.
             }
@@ -240,7 +248,7 @@ typedef enum {
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
-    [SourceKitLogger debug:@"applicationDidBecomeActive"];
+    [SKLogger debug:@"VAST - View Controller" withMessage:@"applicationDidBecomeActive"];
     [self handleResumeState];
 }
 
@@ -250,11 +258,11 @@ typedef enum {
 {
     @synchronized (self) {
         MPMoviePlaybackState state = [self.moviePlayer playbackState];
-        [SourceKitLogger debug:[ NSString stringWithFormat:@"playback state change to %i", state]];
+        [SKLogger debug:@"VAST - View Controller" withMessage:[NSString stringWithFormat:@"playback state change to %li", (long)state]];
         
         switch (state) {
             case MPMoviePlaybackStateStopped:  // 0
-                [SourceKitLogger debug:@"video stopped"];
+                [SKLogger debug:@"VAST - View Controller" withMessage:@"video stopped"];
                 break;
             case MPMoviePlaybackStatePlaying:  // 1
                 isPlaying=YES;
@@ -264,26 +272,26 @@ typedef enum {
                     loadingIndicator = nil;
                 }
                 if (isViewOnScreen) {
-                    [SourceKitLogger debug:@"video is playing"];
+                    [SKLogger debug:@"VAST - View Controller" withMessage:@"video is playing"];
                     [self startPlaybackTimer];
                 }
                 break;
             case MPMoviePlaybackStatePaused:  // 2
                 [self stopPlaybackTimer];
-                [SourceKitLogger debug:@"video paused"];
+                [SKLogger debug:@"VAST - View Controller" withMessage:@"video paused"];
                 isPlaying=NO;
                 break;
             case MPMoviePlaybackStateInterrupted:  // 3
-                [SourceKitLogger debug:@"video interrupt"];
+                [SKLogger debug:@"VAST - View Controller" withMessage:@"video interrupt"];
                 break;
             case MPMoviePlaybackStateSeekingForward:  // 4
-                [SourceKitLogger debug:@"video seeking forward"];
+                [SKLogger debug:@"VAST - View Controller" withMessage:@"video seeking forward"];
                 break;
             case MPMoviePlaybackStateSeekingBackward:  // 5
-                [SourceKitLogger debug:@"video seeking backward"];
+                [SKLogger debug:@"VAST - View Controller" withMessage:@"video seeking backward"];
                 break;
             default:
-                [SourceKitLogger warning:@"undefined state change"];
+                [SKLogger debug:@"VAST - View Controller" withMessage:@"undefined state change"];
                 break;
         }
     }
@@ -291,7 +299,7 @@ typedef enum {
 
 - (void)moviePlayerLoadStateChanged:(NSNotification *)notification
 {
-    [SourceKitLogger debug:[NSString stringWithFormat:@"movie player load state is %i", self.moviePlayer.loadState]];
+    [SKLogger debug:@"VAST - View Controller" withMessage:[NSString stringWithFormat:@"movie player load state is %li", (long)self.moviePlayer.loadState]];
     
     if ((self.moviePlayer.loadState & MPMovieLoadStatePlaythroughOK) == MPMovieLoadStatePlaythroughOK )
     {
@@ -303,18 +311,18 @@ typedef enum {
 - (void)moviePlayBackDidFinish:(NSNotification *)notification
 {
     @synchronized(self) {
-        [SourceKitLogger debug:@"playback did finish"];
+        [SKLogger debug:@"VAST - View Controller" withMessage:@"playback did finish"];
         
         NSDictionary* userInfo=[notification userInfo];
         NSString* error=[userInfo objectForKey:kPlaybackFinishedUserInfoErrorKey];
         
         if (error) {
-            [SourceKitLogger debug:[ NSString stringWithFormat:@"playback error:  %@", error]];
+            [SKLogger error:@"VAST - View Controller" withMessage:[NSString stringWithFormat:@"playback error:  %@", error]];
             if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
                 [self.delegate vastError:self error:VASTErrorPlaybackError];
             }
             if (vastErrors) {
-                [SourceKitLogger debug:@"Sending Error requests"];
+                [SKLogger debug:@"VAST - View Controller" withMessage:@"Sending Error requests"];
                 [self.eventProcessor sendVASTUrlsWithId:vastErrors];
             }
             [self close];
@@ -322,7 +330,7 @@ typedef enum {
             // no error, clean finish, so send track complete
             [self.eventProcessor trackEvent:VASTEventTrackComplete];
             [self updatePlayedSeconds];
-            [controls showControls];
+            [self showControls];
             [controls toggleToPlayButton:YES];
         }
     }
@@ -334,20 +342,20 @@ typedef enum {
         movieDuration = self.moviePlayer.duration;
     }
     @catch (NSException *e) {
-        [SourceKitLogger debug:[NSString stringWithFormat:@"Exception - movieDuration: %@", e]];
+        [SKLogger error:@"VAST - View Controller" withMessage:[NSString stringWithFormat:@"Exception - movieDuration: %@", e]];
         // The movie too short error will fire if movieDuration is < 0.5 or is a NaN value, so no need for further action here.
     }
     
-    [SourceKitLogger debug:[ NSString stringWithFormat:@"playback duration is %f", movieDuration]];
+    [SKLogger debug:@"VAST - View Controller" withMessage:[NSString stringWithFormat:@"playback duration is %f", movieDuration]];
     
     if (movieDuration < 0.5 || isnan(movieDuration)) {
         // movie too short - ignore it
-        [SourceKitLogger debug:@"Movie too short - will dismiss player"];
+        [SKLogger warning:@"VAST - View Controller" withMessage:@"Movie too short - will dismiss player"];
         if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
             [self.delegate vastError:self error:VASTErrorMovieTooShort];
         }
         if (vastErrors) {
-            [SourceKitLogger debug:@"Sending Error requests"];
+            [SKLogger debug:@"VAST - View Controller" withMessage:@"Sending Error requests"];
             [self.eventProcessor sendVASTUrlsWithId:vastErrors];
         }
         [self close];
@@ -361,11 +369,11 @@ typedef enum {
         sourceType = self.moviePlayer.movieSourceType;
     }
     @catch (NSException *e) {
-        [SourceKitLogger debug:[NSString stringWithFormat:@"Exception - movieSourceType: %@", e]];
+        [SKLogger error:@"VAST - View Controller" withMessage:[NSString stringWithFormat:@"Exception - movieSourceType: %@", e]];
         // sourceType is used for info only - any player related error will be handled otherwise, ultimately by videoTimeout, so no other action needed here.
     }
     
-    [SourceKitLogger debug:[ NSString stringWithFormat:@"movie source type is %i", sourceType]];
+    [SKLogger debug:@"VAST - View Controller" withMessage:[NSString stringWithFormat:@"movie source type is %li", (long)sourceType]];
 }
 
 #pragma mark - Orientation handling
@@ -406,7 +414,7 @@ typedef enum {
 {
     @synchronized (self) {
         [self stopPlaybackTimer];
-        [SourceKitLogger debug:@"start playback timer"];
+        [SKLogger debug:@"VAST - View Controller" withMessage:@"start playback timer"];
         playbackTimer = [NSTimer scheduledTimerWithTimeInterval:kPlayTimeCounterInterval
                                                          target:self
                                                        selector:@selector(updatePlayedSeconds)
@@ -417,7 +425,7 @@ typedef enum {
 
 - (void)stopPlaybackTimer
 {
-    [SourceKitLogger debug:@"stop playback timer"];
+    [SKLogger debug:@"VAST - View Controller" withMessage:@"stop playback timer"];
     [playbackTimer invalidate];
     playbackTimer = nil;
 }
@@ -428,7 +436,7 @@ typedef enum {
         playedSeconds = self.moviePlayer.currentPlaybackTime;
     }
     @catch (NSException *e) {
-        [SourceKitLogger debug:[NSString stringWithFormat:@"Exception - updatePlayedSeconds: %@", e]];
+        [SKLogger warning:@"VAST - View Controller" withMessage:[NSString stringWithFormat:@"Exception - updatePlayedSeconds: %@", e]];
         // The hang test below will fire if playedSeconds doesn't update (including a NaN value), so no need for further action here.
     }
     
@@ -436,12 +444,12 @@ typedef enum {
     
     if ([self.videoHangTest count]>20) {  // only check for hang if we have at least 20 elements or about 5 seconds of played video, to prevent false positives
         if ([[self.videoHangTest firstObject] integerValue]==[[self.videoHangTest lastObject] integerValue]) {
-            [SourceKitLogger debug:[NSString stringWithFormat:@"Video error - video player hung at playedSeconds: %f", playedSeconds]];
+            [SKLogger error:@"VAST - View Controller" withMessage:[NSString stringWithFormat:@"Video error - video player hung at playedSeconds: %f", playedSeconds]];
             if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
                 [self.delegate vastError:self error:VASTErrorPlayerHung];
             }
             if (vastErrors) {
-                [SourceKitLogger debug:@"Sending Error requests"];
+                [SKLogger debug:@"VAST - View Controller" withMessage:@"Sending Error requests"];
                 [self.eventProcessor sendVASTUrlsWithId:vastErrors];
             }
             [self close];
@@ -499,9 +507,9 @@ typedef enum {
 
 - (void)videoLoadTimeout
 {
-    [SourceKitLogger debug:@"Video Load Timeout"];
+    [SKLogger error:@"VAST - View Controller" withMessage:@"Video Load Timeout"];
     if (vastErrors) {
-        [SourceKitLogger debug:@"Sending Error requests"];
+       [SKLogger debug:@"VAST - View Controller" withMessage:@"Sending Error requests"];
         [self.eventProcessor sendVASTUrlsWithId:vastErrors];
     }
     if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
@@ -520,12 +528,12 @@ typedef enum {
 - (void)play
 {
     @synchronized (self) {
-        [SourceKitLogger debug:@"playVideo"];
+        [SKLogger debug:@"VAST - View Controller" withMessage:@"playVideo"];
         
         if (!vastReady) {
             if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
                 [self.delegate vastError:self error:VASTErrorPlayerNotReady];                  // This is not a VAST player error, so no external Error event is sent.
-                [SourceKitLogger debug:@"Ignoring call to playVideo before the player has sent vastReady."];
+                [SKLogger warning:@"VAST - View Controller" withMessage:@"Ignoring call to playVideo before the player has sent vastReady."];
                 return;
             }
         }
@@ -533,13 +541,13 @@ typedef enum {
         if (isViewOnScreen) {
             if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
                 [self.delegate vastError:self error:VASTErrorPlaybackAlreadyInProgress];       // This is not a VAST player error, so no external Error event is sent.
-                [SourceKitLogger debug:@"Ignoring call to playVideo while playback is already in progress"];
+                [SKLogger warning:@"VAST - View Controller" withMessage:@"Ignoring call to playVideo while playback is already in progress"];
                 return;
             }
         }
         
         if (!self.networkCurrentlyReachable) {
-            [SourceKitLogger debug:@"No network available - VASTViewcontroller will not be presented"];
+            [SKLogger error:@"VAST - View Controller" withMessage:@"No network available - VASTViewcontroller will not be presented"];
             if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
                 [self.delegate vastError:self error:VASTErrorNoInternetConnection];   // There is network so no requests can be sent, we don't queue errors, so no external Error event is sent.
             }
@@ -548,7 +556,7 @@ typedef enum {
         
         // Now we are ready to launch the player and start buffering the content
         // It will throw error if the url is invalid for any reason. In this case, we don't even need to open ViewController.
-        [SourceKitLogger debug:@"initializing player"];
+        [SKLogger debug:@"VAST - View Controller" withMessage:@"initializing player"];
         
         @try {
             playedSeconds = 0.0;
@@ -562,12 +570,12 @@ typedef enum {
             [self presentPlayer];
         }
         @catch (NSException *e) {
-            [SourceKitLogger debug:[NSString stringWithFormat:@"Exception - moviePlayer.prepareToPlay: %@", e]];
+            [SKLogger error:@"VAST - View Controller" withMessage:[NSString stringWithFormat:@"Exception - moviePlayer.prepareToPlay: %@", e]];
             if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
                 [self.delegate vastError:self error:VASTErrorPlaybackError];
             }
             if (vastErrors) {
-                [SourceKitLogger debug:@"Sending Error requests"];
+                [SKLogger debug:@"VAST - View Controller" withMessage:@"Sending Error requests"];
                 [self.eventProcessor sendVASTUrlsWithId:vastErrors];
             }
             return;
@@ -577,20 +585,20 @@ typedef enum {
 
 - (void)pause
 {
-    [SourceKitLogger debug:@"pause"];
+    [SKLogger debug:@"VAST - View Controller" withMessage:@"pause"];
     [self handlePauseState];
 }
 
 - (void)resume
 {
-    [SourceKitLogger debug:@"resume"];
+    [SKLogger debug:@"VAST - View Controller" withMessage:@"resume"];
     [self handleResumeState];
 }
 
 - (void)info
 {
     if (clickTracking) {
-        [SourceKitLogger debug:@"Sending clickTracking requests"];
+        [SKLogger debug:@"VAST - View Controller" withMessage:@"Sending clickTracking requests"];
         [self.eventProcessor sendVASTUrlsWithId:clickTracking];
     }
     if ([self.delegate respondsToSelector:@selector(vastOpenBrowseWithUrl:)]) {
@@ -601,16 +609,16 @@ typedef enum {
 - (void)close
 {
     @synchronized (self) {
-        [self.moviePlayer stop];
         [self removeObservers];
         [self killTimers];
+        [self.moviePlayer stop];
         
         self.moviePlayer=nil;
         
         if (isViewOnScreen) {
             // send close any time the player has been dismissed
             [self.eventProcessor trackEvent:VASTEventTrackClose];
-            [SourceKitLogger debug:@"Dismissing VASTViewController"];
+            [SKLogger debug:@"VAST - View Controller" withMessage:@"Dismissing VASTViewController"];
             [self dismissViewControllerAnimated:NO completion:nil];
             
             if ([self.delegate respondsToSelector:@selector(vastDidDismissFullScreen:)]) {
@@ -645,7 +653,14 @@ typedef enum {
 }
 
 - (void)handleTouches{
-    [SourceKitLogger debug:@"observed a touch"];
+    if (!initialDelayTimer) {
+        [self showControls];
+    }
+}
+
+- (void)showControls
+{
+    initialDelayTimer = nil;
     [controls showControls];
 }
 
@@ -653,18 +668,18 @@ typedef enum {
 
 - (void)setupReachability
 {
-    reachabilityForVAST = [Reachability reachabilityForInternetConnection];
+    reachabilityForVAST = [SKReachability reachabilityForInternetConnection];
     reachabilityForVAST.reachableOnWWAN = YES;            // Do allow 3G/WWAN for reachablity
     
-    __unsafe_unretained VASTViewController *self_ = self; // avoid block retain cycle
+    __unsafe_unretained SKVASTViewController *self_ = self; // avoid block retain cycle
     
-    networkReachableBlock  = ^(Reachability*reachabilityForVAST){
-        [SourceKitLogger debug:@"Network reachable"];
+    networkReachableBlock  = ^(SKReachability*reachabilityForVAST){
+        [SKLogger debug:@"VAST - View Controller" withMessage:@"Network reachable"];
         self_.networkCurrentlyReachable = YES;
     };
     
-    networkUnreachableBlock = ^(Reachability*reachabilityForVAST){
-        [SourceKitLogger debug:@"Network not reachable"];
+    networkUnreachableBlock = ^(SKReachability*reachabilityForVAST){
+        [SKLogger debug:@"VAST - View Controller" withMessage:@"Network not reachable"];
         self_.networkCurrentlyReachable = NO;
     };
     
@@ -673,7 +688,7 @@ typedef enum {
     
     [reachabilityForVAST startNotifier];
     self.networkCurrentlyReachable = [reachabilityForVAST isReachable];
-    [SourceKitLogger debug:[NSString stringWithFormat:@"Network is reachable %d", self.networkCurrentlyReachable]];
+    [SKLogger debug:@"VAST - View Controller" withMessage:[NSString stringWithFormat:@"Network is reachable %d", self.networkCurrentlyReachable]];
 }
 
 #pragma mark - Other methods
@@ -685,22 +700,32 @@ typedef enum {
 
 - (void)showAndPlayVideo
 {
-    [SourceKitLogger debug:[NSString stringWithFormat:@"adding player to on screen view and starting play sequence"]];
+    [SKLogger debug:@"VAST - View Controller" withMessage:@"adding player to on screen view and starting play sequence"];
     
     self.moviePlayer.view.frame=self.view.bounds;
     [self.view addSubview:self.moviePlayer.view];
     
     // N.B. The player has to be ready to play before controls may be added to the player's view
-    [SourceKitLogger debug:@"initializing player controls"];
-    controls = [[VASTControls alloc] initWithVASTPlayer:self];
-    [self.moviePlayer.view addSubview: controls.view];
-    [controls showControls];
+    [SKLogger debug:@"VAST - View Controller" withMessage:@"initializing player controls"];
+    controls = [[SKVASTControls alloc] initWithVASTPlayer:self];
+    [self.moviePlayer.view addSubview: controls];
+    
+    if (kFirstShowControlsDelay > 0) {
+        [controls hideControls];
+        initialDelayTimer = [NSTimer scheduledTimerWithTimeInterval:kFirstShowControlsDelay
+                                                             target:self
+                                                           selector:@selector(showControls)
+                                                           userInfo:nil
+                                                            repeats:NO];
+    } else {
+        [self showControls];
+    }
     
     [self.moviePlayer play];
     hasPlayerStarted=YES;
     
     if (impressions) {
-        [SourceKitLogger debug:@"Sending Impressions requests"];
+        [SKLogger debug:@"VAST - View Controller" withMessage:@"Sending Impressions requests"];
         [self.eventProcessor sendVASTUrlsWithId:impressions];
     }
     [self.eventProcessor trackEvent:VASTEventTrackStart];
@@ -721,7 +746,7 @@ typedef enum {
 {
     @synchronized (self) {
     if (isPlaying) {
-        [SourceKitLogger debug:@"handle pausing player"];
+        [SKLogger debug:@"VAST - View Controller" withMessage:@"handle pausing player"];
         [self.moviePlayer pause];
         isPlaying = NO;
         [self.eventProcessor trackEvent:VASTEventTrackPause];
@@ -736,7 +761,7 @@ typedef enum {
     if (hasPlayerStarted) {
         if (![controls controlsPaused]) {
         // resuming from background or phone call, so resume if was playing, stay paused if manually paused by inspecting controls state
-        [SourceKitLogger debug:@"handleResumeState, resuming player"];
+        [SKLogger debug:@"VAST - View Controller" withMessage:@"handleResumeState, resuming player"];
         [self.moviePlayer play];
         isPlaying = YES;
         [self.eventProcessor trackEvent:VASTEventTrackResume];

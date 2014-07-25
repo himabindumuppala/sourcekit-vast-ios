@@ -1,15 +1,15 @@
 //
-//  VASTMediaFilePicker.m
+//  SKVASTMediaFilePicker.m
 //  VAST
 //
 //  Created by Muthu on 11/20/13.
 //  Copyright (c) 2013 Nexage. All rights reserved.
 //
 
-#import "VASTMediaFilePicker.h"
-#import "Reachability.h"
-#import "SourceKitLogger.h"
-
+#import "SKVASTMediaFilePicker.h"
+#import "SKReachability.h"
+#import "VASTSettings.h"
+#import "SKLogger.h"
 #import <UIKit/UIKit.h>
 
 // This enum will be of more use if we ever decide to include the media files'
@@ -20,29 +20,31 @@ typedef enum {
     NetworkTypeWiFi
 } NetworkType;
 
-@interface VASTMediaFilePicker()
+@interface SKVASTMediaFilePicker()
 
 + (NetworkType)networkType;
-+ (BOOL)isMIMETypeCompatible:(VASTMediaFile *)vastMediaFile;
++ (BOOL)isMIMETypeCompatible:(SKVASTMediaFile *)vastMediaFile;
 
 @end
 
-@implementation VASTMediaFilePicker
+@implementation SKVASTMediaFilePicker
 
-+ (VASTMediaFile *)pick:(NSArray *)mediaFiles
++ (SKVASTMediaFile *)pick:(NSArray *)mediaFiles
 {
     // Check whether we even have a network connection.
     // If not, return a nil.
     NetworkType networkType = [self networkType];
-    [SourceKitLogger info:[NSString stringWithFormat:@"NetworkType: %d", networkType]];
+    
+    [SKLogger debug:@"VAST - Mediafile Picker" withMessage:[NSString stringWithFormat:@"NetworkType: %d", networkType]];
     if (networkType == NetworkTypeNone) {
         return nil;
     }
     
     // Go through the provided media files and only those that have a compatible MIME type.
     NSMutableArray *compatibleMediaFiles = [[NSMutableArray alloc] init];
-    for (VASTMediaFile *vastMediaFile in mediaFiles) {
-        if ([self isMIMETypeCompatible:vastMediaFile]) {
+    for (SKVASTMediaFile *vastMediaFile in mediaFiles) {
+        // Make sure that you have type specified for mediafile and ignore accordingly
+        if (vastMediaFile.type != nil && [self isMIMETypeCompatible:vastMediaFile]) {
             [compatibleMediaFiles addObject:vastMediaFile];
         }
     }
@@ -52,8 +54,8 @@ typedef enum {
     
     // Sort the media files based on their video size (in square pixels).
     NSArray *sortedMediaFiles = [compatibleMediaFiles sortedArrayUsingComparator:^NSComparisonResult(id a, id b) {
-        VASTMediaFile *mf1 = (VASTMediaFile *)a;
-        VASTMediaFile *mf2 = (VASTMediaFile *)b;
+        SKVASTMediaFile *mf1 = (SKVASTMediaFile *)a;
+        SKVASTMediaFile *mf2 = (SKVASTMediaFile *)b;
         int area1 = mf1.width * mf1.height;
         int area2 = mf2.width * mf2.height;
         if (area1 < area2) {
@@ -70,10 +72,10 @@ typedef enum {
     int screenArea = screenSize.width * screenSize.height;
     int bestMatch = 0;
     int bestMatchDiff = INT_MAX;
-    int len = [sortedMediaFiles count];
+    int len = (int)[sortedMediaFiles count];
     
     for (int i = 0; i < len; i++) {
-        int videoArea = ((VASTMediaFile *)sortedMediaFiles[i]).width * ((VASTMediaFile *)sortedMediaFiles[i]).height;
+        int videoArea = ((SKVASTMediaFile *)sortedMediaFiles[i]).width * ((SKVASTMediaFile *)sortedMediaFiles[i]).height;
         int diff = abs(screenArea - videoArea);
        if (diff >= bestMatchDiff) {
             break;
@@ -82,14 +84,14 @@ typedef enum {
         bestMatchDiff = diff;
     }
     
-    VASTMediaFile *toReturn = (VASTMediaFile *)sortedMediaFiles[bestMatch];
-    [SourceKitLogger info:[NSString stringWithFormat:@"Selected Media File: %@", toReturn.url]];
+    SKVASTMediaFile *toReturn = (SKVASTMediaFile *)sortedMediaFiles[bestMatch];
+    [SKLogger debug:@"VAST - Mediafile Picker" withMessage:[NSString stringWithFormat:@"Selected Media File: %@", toReturn.url]];
     return toReturn;
 }
 
 + (NetworkType)networkType
 {
-    Reachability* reach = [Reachability reachabilityWithHostname:@"www.google.com"];
+    SKReachability* reach = [SKReachability reachabilityWithHostname:@"www.google.com"];
     NetworkType reachableState = NetworkTypeNone;
     if ([reach isReachable]) {
         if ([reach isReachableViaWiFi]) {
@@ -101,7 +103,7 @@ typedef enum {
     return reachableState;
 }
 
-+ (BOOL)isMIMETypeCompatible:(VASTMediaFile *)vastMediaFile
++ (BOOL)isMIMETypeCompatible:(SKVASTMediaFile *)vastMediaFile
 {
     NSString *pattern = @"(mp4|m4v|quicktime|3gpp)";
     NSError *error = NULL;

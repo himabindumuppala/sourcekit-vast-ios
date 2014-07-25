@@ -1,5 +1,5 @@
 //
-//  VASTUrlWithId.h
+//  SKVASTUrlWithId.h
 //  VAST
 //
 //  Created by Jay Tucker on 10/15/13.
@@ -9,7 +9,7 @@
 
 #import <Foundation/Foundation.h>
 
-@interface VASTUrlWithId : NSObject
+@interface SKVASTUrlWithId : NSObject
 
 @property (nonatomic, copy, readonly) NSString *id_; // add trailing underscore to id_ to avoid conflict with reserved keyword "id".
 @property (nonatomic, strong, readonly) NSURL *url;

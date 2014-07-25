@@ -56,7 +56,7 @@
 #define NS_ENUM(_type, _name) enum _name : _type _name; enum _name : _type
 #endif
 
-extern NSString *const kReachabilityChangedNotification;
+extern NSString *const kSKReachabilityChangedNotification;
 
 typedef NS_ENUM(NSInteger, NetworkStatus) {
     // Apple NetworkStatus Compatible Names.
@@ -65,12 +65,12 @@ typedef NS_ENUM(NSInteger, NetworkStatus) {
     ReachableViaWWAN = 1
 };
 
-@class Reachability;
+@class SKReachability;
 
-typedef void (^NetworkReachable)(Reachability * reachability);
-typedef void (^NetworkUnreachable)(Reachability * reachability);
+typedef void (^NetworkReachable)(SKReachability * reachability);
+typedef void (^NetworkUnreachable)(SKReachability * reachability);
 
-@interface Reachability : NSObject
+@interface SKReachability : NSObject
 
 @property (nonatomic, copy) NetworkReachable    reachableBlock;
 @property (nonatomic, copy) NetworkUnreachable  unreachableBlock;
@@ -78,12 +78,12 @@ typedef void (^NetworkUnreachable)(Reachability * reachability);
 
 @property (nonatomic, assign) BOOL reachableOnWWAN;
 
-+(Reachability*)reachabilityWithHostname:(NSString*)hostname;
-+(Reachability*)reachabilityForInternetConnection;
-+(Reachability*)reachabilityWithAddress:(const struct sockaddr_in*)hostAddress;
-+(Reachability*)reachabilityForLocalWiFi;
++(SKReachability*)reachabilityWithHostname:(NSString*)hostname;
++(SKReachability*)reachabilityForInternetConnection;
++(SKReachability*)reachabilityWithAddress:(const struct sockaddr_in*)hostAddress;
++(SKReachability*)reachabilityForLocalWiFi;
 
--(Reachability *)initWithReachabilityRef:(SCNetworkReachabilityRef)ref;
+-(SKReachability *)initWithReachabilityRef:(SCNetworkReachabilityRef)ref;
 
 -(BOOL)startNotifier;
 -(void)stopNotifier;

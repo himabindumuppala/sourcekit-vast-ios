@@ -1,5 +1,5 @@
 //
-//  NexageAppDelegate.m
+//  AppDelegate.m
 //  VASTDemo
 //
 //  Created by Thomas Poland on 9/30/13.
@@ -7,16 +7,14 @@
 //
 
 #import "AppDelegate.h"
-#import "SourceKitLogger.h"
+#import "SKLogger.h"
 
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     // Override point for customization after application launch.
-    
-    [SourceKitLogger setLogLevel:SourceKitLogLevelDebug];
-    
+    [SKLogger setLogLevel:SourceKitLogLevelDebug];
     return YES;
 }
 							

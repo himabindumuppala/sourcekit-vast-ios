@@ -1,14 +1,14 @@
 //
-//  VASTMediaFile.m
+//  SKVASTMediaFile.m
 //  VAST
 //
 //  Created by Jay Tucker on 10/15/13.
 //  Copyright (c) 2013 Nexage. All rights reserved.
 //
 
-#import "VASTMediaFile.h"
+#import "SKVASTMediaFile.h"
 
-@implementation VASTMediaFile
+@implementation SKVASTMediaFile
 
 - (id)initWithId:(NSString *)id_
         delivery:(NSString *)delivery

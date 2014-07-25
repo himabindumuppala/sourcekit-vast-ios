@@ -1,14 +1,14 @@
 //
-//  VASTUrlWithId.m
+//  SKVASTUrlWithId.m
 //  VAST
 //
 //  Created by Jay Tucker on 10/15/13.
 //  Copyright (c) 2013 Nexage. All rights reserved.
 //
 
-#import "VASTUrlWithId.h"
+#import "SKVASTUrlWithId.h"
 
-@implementation VASTUrlWithId
+@implementation SKVASTUrlWithId
 
 - (id)initWithID:(NSString *)id_ url:(NSURL *)url
 {

@@ -7,7 +7,8 @@
 //
 
 #import "VASTXMLUtil.h"
-#import "SourceKitLogger.h"
+#import "VASTSettings.h"
+#import "SKLogger.h"
 
 #import <libxml/tree.h>
 #import <libxml/parser.h>
@@ -29,7 +30,7 @@ void documentParserErrorCallback(void *ctx, const char *msg, ...)
         errMsg = [[NSString stringWithCString:s encoding:NSUTF8StringEncoding] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     }
     if ([errMsg length] > 0) {
-        [SourceKitLogger debug:[NSString stringWithFormat:@"Document parser error: %@", errMsg]];
+        [SKLogger error:@"VAST - XML Util" withMessage:[NSString stringWithFormat:@"Document parser error: %@", errMsg]];
     }
     va_end(args);
 }
@@ -41,7 +42,7 @@ void schemaParserErrorCallback(void *ctx, const char *msg, ...)
     char *s = va_arg(args, char*);
     NSString *errMsg = [[NSString stringWithCString:s encoding:NSUTF8StringEncoding] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     if ([errMsg length] > 0) {
-        [SourceKitLogger debug:[NSString stringWithFormat:@"Schema parser error: %@", errMsg]];
+        [SKLogger error:@"VAST - XML Util" withMessage:[NSString stringWithFormat:@"Schema parser error: %@", errMsg]];
     }
     va_end(args);
 }
@@ -53,7 +54,7 @@ void schemaParserWarningCallback(void *ctx, const char *msg, ...)
     char *s = va_arg(args, char*);
     NSString *errMsg = [[NSString stringWithCString:s encoding:NSUTF8StringEncoding] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     if ([errMsg length] > 0) {
-        [SourceKitLogger debug:[NSString stringWithFormat:@"Schema parser warning: %@", errMsg]];
+        [SKLogger warning:@"VAST - XML Util" withMessage:[NSString stringWithFormat:@"Schema parser warning: %@", errMsg]];
     }
     va_end(args);
 }
@@ -65,7 +66,7 @@ void schemaValidationErrorCallback(void *ctx, const char *msg, ...)
     char *s = va_arg(args, char*);
     NSString *errMsg = [[NSString stringWithCString:s encoding:NSUTF8StringEncoding] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     if ([errMsg length] > 0) {
-        [SourceKitLogger debug:[NSString stringWithFormat:@"Schema validation error: %@", errMsg]];
+        [SKLogger error:@"VAST - XML Util" withMessage:[NSString stringWithFormat:@"Schema validation error: %@", errMsg]];
     }
     va_end(args);
 }
@@ -77,7 +78,7 @@ void schemaValidationWarningCallback(void *ctx, const char *msg, ...)
     char *s = va_arg(args, char*);
     NSString *errMsg = [[NSString stringWithCString:s encoding:NSUTF8StringEncoding] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     if ([errMsg length] > 0) {
-        [SourceKitLogger debug:[NSString stringWithFormat:@"Schema validation warning: %@", errMsg]];
+        [SKLogger warning:@"VAST - XML Util" withMessage:[NSString stringWithFormat:@"Schema validation warning: %@", errMsg]];
     }
     va_end(args);
 }
@@ -169,20 +170,20 @@ NSArray *performXPathQuery(xmlDocPtr doc, NSString *query)
     // Create xpath evaluation context
     xpathCtx = xmlXPathNewContext(doc);
     if (xpathCtx == NULL) {
-        [SourceKitLogger debug:@"Unable to create XPath context."];
+        [SKLogger error:@"VAST - XML Util" withMessage:@"Unable to create XPath context."];
 		return nil;
     }
     
     // Evaluate xpath expression
     xpathObj = xmlXPathEvalExpression((xmlChar *)[query cStringUsingEncoding:NSUTF8StringEncoding], xpathCtx);
     if (xpathObj == NULL) {
-        [SourceKitLogger debug:@"Unable to evaluate XPath."];
+        [SKLogger error:@"VAST - XML Util" withMessage:@"Unable to evaluate XPath."];
 		return nil;
     }
 	
 	xmlNodeSetPtr nodes = xpathObj->nodesetval;
 	if (!nodes) {
-        [SourceKitLogger debug:@"Nodes was nil."];
+        [SKLogger debug:@"VAST - XML Util" withMessage:@"Nodes was nil."];
 		return nil;
 	}
 	
@@ -207,9 +208,9 @@ BOOL validateXMLDocSyntax(NSData *document)
 {
     BOOL retval = YES;
     xmlSetGenericErrorFunc(NULL, (xmlGenericErrorFunc)documentParserErrorCallback);
-	xmlDocPtr doc = xmlReadMemory([document bytes], [document length], "", NULL, 0); // XML_PARSE_RECOVER);
+	xmlDocPtr doc = xmlReadMemory([document bytes], (int)[document length], "", NULL, 0); // XML_PARSE_RECOVER);
     if (doc == NULL) {
-        [SourceKitLogger debug:@"Unable to parse."];
+        [SKLogger error:@"VAST - XML Util" withMessage:@"Unable to parse."];
 		retval = NO;
     } else {
         xmlFreeDoc(doc);
@@ -223,16 +224,16 @@ BOOL validateXMLDocAgainstSchema(NSData *document, NSData *schemaData)
     xmlSetGenericErrorFunc(NULL, (xmlGenericErrorFunc)documentParserErrorCallback);
     
     // load XML document
-	xmlDocPtr doc = xmlReadMemory([document bytes], [document length], "", NULL, 0); // XML_PARSE_RECOVER);
+	xmlDocPtr doc = xmlReadMemory([document bytes], (int)[document length], "", NULL, 0); // XML_PARSE_RECOVER);
     if (doc == NULL) {
-        [SourceKitLogger debug:@"Unable to parse."];
+        [SKLogger error:@"VAST - XML Util" withMessage:@"Unable to parse."];
         xmlCleanupParser();
 		return NO;
     }
     
     xmlLineNumbersDefault(1);
     
-    xmlSchemaParserCtxtPtr parserCtxt = xmlSchemaNewMemParserCtxt([schemaData bytes], [schemaData length]);
+    xmlSchemaParserCtxtPtr parserCtxt = xmlSchemaNewMemParserCtxt([schemaData bytes], (int)[schemaData length]);
     
     xmlSchemaSetParserErrors(parserCtxt,
                              (xmlSchemaValidityErrorFunc)schemaParserErrorCallback,
@@ -251,11 +252,11 @@ BOOL validateXMLDocAgainstSchema(NSData *document, NSData *schemaData)
                             NULL);
     int ret = xmlSchemaValidateDoc(validCtxt, doc);
     if (ret == 0) {
-        [SourceKitLogger debug:@"document is valid"];
+        [SKLogger error:@"VAST - XML Util" withMessage:@"document is valid"];
     } else if (ret > 0) {
-        [SourceKitLogger debug:@"document is invalid"];
+        [SKLogger error:@"VAST - XML Util" withMessage:@"document is invalid"];
     } else {
-        [SourceKitLogger debug:@"validation generated an internal error"];
+        [SKLogger error:@"VAST - XML Util" withMessage:@"validation generated an internal error"];
     }
     
     xmlSchemaFreeValidCtxt(validCtxt);
@@ -276,9 +277,9 @@ BOOL validateXMLDocAgainstSchema(NSData *document, NSData *schemaData)
 NSArray *performXMLXPathQuery(NSData *document, NSString *query)
 {
     xmlDocPtr doc;
-	doc = xmlReadMemory([document bytes], [document length], "", NULL, 0); // XML_PARSE_RECOVER);
+	doc = xmlReadMemory([document bytes], (int)[document length], "", NULL, 0); // XML_PARSE_RECOVER);
     if (doc == NULL) {
-        [SourceKitLogger debug:@"Unable to parse."];
+        [SKLogger error:@"VAST - XML Util" withMessage:@"Unable to parse."];
 		return nil;
     }
 	NSArray *result = performXPathQuery(doc, query);

@@ -7,10 +7,9 @@
 //
 
 #import <XCTest/XCTest.h>
-#import "VAST2Parser.h"
-#import "VASTMediaFile.h"
-#import "VASTMediaFilePicker.h"
-#import "SourceKitLogger.h"
+#import "SKVAST2Parser.h"
+#import "SKVASTMediaFile.h"
+#import "SKVASTMediaFilePicker.h"
 
 @interface VAST_Tests : XCTestCase
 
@@ -21,9 +20,6 @@
 - (void)setUp
 {
     [super setUp];
-    
-    // Enable logging
-    [SourceKitLogger setLogLevel:SourceKitLogLevelDebug];
 }
 
 - (void)tearDown
@@ -36,7 +32,7 @@
 {
     NSURL *url = [NSURL URLWithString:@"http://adserver.adtechus.com/?advideo/3.0/5326.1/2344925/0//cc=2;vidAS=pre_roll;ip=;key=_Non-Mobile;kvip=;kvcarrier=;vidRTV=2.0;vidRT=VAST;misc=1381260694027;target=_self;"];
     
-    [[VAST2Parser new] parseWithUrl:url completion:^(VASTModel *vastModel, VASTError error) {
+    [[SKVAST2Parser new] parseWithUrl:url completion:^(SKVASTModel *vastModel, SKVASTError error) {
         XCTAssertNil(vastModel, @"Failed to get model back");
     }];
 }
@@ -45,7 +41,7 @@
 {
     NSURL *url = [NSURL URLWithString:@"http://vast.tubemogul.com/vast/placement/ipyMwaO9IKkr7ljUG4Jx?rand=3940583"];
     
-    [[VAST2Parser new] parseWithUrl:url completion:^(VASTModel *vastModel, VASTError vastError) {
+    [[SKVAST2Parser new] parseWithUrl:url completion:^(SKVASTModel *vastModel, SKVASTError vastError) {
         XCTAssertNotNil(vastModel, @"Expected a nil model but got something else");
     }];
 }
@@ -54,7 +50,7 @@
 - (void)testMediaFilePickerSelectMimeMP4
 {
     NSMutableArray *mediaFileArray = [ NSMutableArray arrayWithCapacity:0];
-    VASTMediaFile *mediaFile1 = [[VASTMediaFile alloc]
+    SKVASTMediaFile *mediaFile1 = [[SKVASTMediaFile alloc]
                                 initWithId:             @"testMediaFile1"
                                 delivery:               @"progressive"
                                 type:       @"video/mp4"
@@ -66,7 +62,7 @@
                                 apiFramework:           @"aFrameworkName"
                                 url:                    @"theMediaFileUrl"];
     
-    VASTMediaFile *mediaFile2 = [[VASTMediaFile alloc]
+    SKVASTMediaFile *mediaFile2 = [[SKVASTMediaFile alloc]
                                  initWithId:             @"testMediaFile1"
                                  delivery:               @"progressive"
                                  type:     @"video/x-flv"
@@ -78,7 +74,7 @@
                                  apiFramework:           @"aFrameworkName"
                                  url:                    @"theMediaFileUrl"];
 
-    VASTMediaFile *mediaFile3 = [[VASTMediaFile alloc]
+    SKVASTMediaFile *mediaFile3 = [[SKVASTMediaFile alloc]
                                  initWithId:             @"testMediaFile1"
                                  delivery:               @"progressive"
                                  type: @"video/x-msvideo"
@@ -94,13 +90,13 @@
     [mediaFileArray addObject:mediaFile2];
     [mediaFileArray addObject:mediaFile3];
     
-    XCTAssertEqualObjects(mediaFile1,  [VASTMediaFilePicker pick:mediaFileArray], @"Expected but did not pick the video/mp4 mime type media file");
+    XCTAssertEqualObjects(mediaFile1,  [SKVASTMediaFilePicker pick:mediaFileArray], @"Expected but did not pick the video/mp4 mime type media file");
 }
 
 - (void)testMediaFilePickerNonVideoMimeType
 {
     NSMutableArray *mediaFileArray = [ NSMutableArray arrayWithCapacity:0];
-    VASTMediaFile *mediaFile1 = [[VASTMediaFile alloc]
+    SKVASTMediaFile *mediaFile1 = [[SKVASTMediaFile alloc]
                                  initWithId:             @"testMediaFile1"
                                  delivery:               @"progressive"
                                  type: @"text/javascript"
@@ -114,13 +110,13 @@
     
     [mediaFileArray addObject:mediaFile1];
     
-    XCTAssertNil([VASTMediaFilePicker pick:mediaFileArray], @"Expected nil for unsupported mime type, but got something else");
+    XCTAssertNil([SKVASTMediaFilePicker pick:mediaFileArray], @"Expected nil for unsupported mime type, but got something else");
 }
 
 - (void)testMediaFilePickerInvalidMimeType
 {
     NSMutableArray *mediaFileArray = [ NSMutableArray arrayWithCapacity:0];
-    VASTMediaFile *mediaFile1 = [[VASTMediaFile alloc]
+    SKVASTMediaFile *mediaFile1 = [[SKVASTMediaFile alloc]
                                  initWithId:             @"testMediaFile1"
                                  delivery:               @"progressive"
                                  type: @"not a mime type"
@@ -134,13 +130,13 @@
     
     [mediaFileArray addObject:mediaFile1];
     
-    XCTAssertNil([VASTMediaFilePicker pick:mediaFileArray], @"Expected nil for unsupported mime type, but got something else");
+    XCTAssertNil([SKVASTMediaFilePicker pick:mediaFileArray], @"Expected nil for unsupported mime type, but got something else");
 }
 
 - (void)testMediaFilePickerSizedForPhoneVSiPad
 {
     NSMutableArray *mediaFileArray = [ NSMutableArray arrayWithCapacity:0];
-    VASTMediaFile *mediaFile1 = [[VASTMediaFile alloc]
+    SKVASTMediaFile *mediaFile1 = [[SKVASTMediaFile alloc]
                                  initWithId:             @"testMediaFile1"
                                  delivery:               @"progressive"
                                  type:                   @"video/mp4"
@@ -152,7 +148,7 @@
                                  apiFramework:           @"aFrameworkName"
                                  url:                    @"theMediaFileUrl"];
     
-    VASTMediaFile *mediaFile2 = [[VASTMediaFile alloc]
+    SKVASTMediaFile *mediaFile2 = [[SKVASTMediaFile alloc]
                                  initWithId:             @"testMediaFile2"
                                  delivery:               @"progressive"
                                  type:                   @"video/mp4"
@@ -164,7 +160,7 @@
                                  apiFramework:           @"aFrameworkName"
                                  url:                    @"theMediaFileUrl"];
     
-    VASTMediaFile *mediaFile3 = [[VASTMediaFile alloc]
+    SKVASTMediaFile *mediaFile3 = [[SKVASTMediaFile alloc]
                                  initWithId:             @"testMediaFile3"
                                  delivery:               @"progressive"
                                  type:                   @"video/mp4"
@@ -182,16 +178,16 @@
     
     if ( UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad )
     {
-        XCTAssertEqualObjects(mediaFile2, [VASTMediaFilePicker pick:mediaFileArray], @"Expected but did not pick the media file sized 640x360 for iPad");
+        XCTAssertEqualObjects(mediaFile2, [SKVASTMediaFilePicker pick:mediaFileArray], @"Expected but did not pick the media file sized 640x360 for iPad");
     } else {
-        XCTAssertEqualObjects(mediaFile1, [VASTMediaFilePicker pick:mediaFileArray], @"Expected but did not pick the media file sized 320x480 for phone");
+        XCTAssertEqualObjects(mediaFile1, [SKVASTMediaFilePicker pick:mediaFileArray], @"Expected but did not pick the media file sized 320x480 for phone");
     }
 }
 
 - (void)testMediaFilePickerOfEqualDimension
 {
     NSMutableArray *mediaFileArray = [ NSMutableArray arrayWithCapacity:0];
-    VASTMediaFile *mediaFile1 = [[VASTMediaFile alloc]
+    SKVASTMediaFile *mediaFile1 = [[SKVASTMediaFile alloc]
                                  initWithId:             @"testMediaFile1"
                                  delivery:               @"progressive"
                                  type:                   @"video/mp4"
@@ -203,7 +199,7 @@
                                  apiFramework:           @"aFrameworkName"
                                  url:                    @"theMediaFileUrl1"];
     
-    VASTMediaFile *mediaFile2 = [[VASTMediaFile alloc]
+    SKVASTMediaFile *mediaFile2 = [[SKVASTMediaFile alloc]
                                  initWithId:             @"testMediaFile2"
                                  delivery:               @"progressive"
                                  type:                   @"video/mp4"
@@ -215,7 +211,7 @@
                                  apiFramework:           @"aFrameworkName"
                                  url:                    @"theMediaFileUrl2"];
     
-    VASTMediaFile *mediaFile3 = [[VASTMediaFile alloc]
+    SKVASTMediaFile *mediaFile3 = [[SKVASTMediaFile alloc]
                                  initWithId:             @"testMediaFile3"
                                  delivery:               @"progressive"
                                  type:                   @"video/mp4"
@@ -231,14 +227,14 @@
     [mediaFileArray addObject:mediaFile2];
     [mediaFileArray addObject:mediaFile3];
     
-    VASTMediaFile *mediaFilePickerPickedFile = [VASTMediaFilePicker pick:mediaFileArray];
+    SKVASTMediaFile *mediaFilePickerPickedFile = [SKVASTMediaFilePicker pick:mediaFileArray];
     XCTAssertEqualObjects(mediaFile1, mediaFilePickerPickedFile, @"Expected but did not pick the media file sized 320x480");
 }
 
 - (void)testMediaFilePickerOnlyOneFile
 {
     NSMutableArray *mediaFileArray = [ NSMutableArray arrayWithCapacity:0];
-    VASTMediaFile *mediaFile1 = [[VASTMediaFile alloc]
+    SKVASTMediaFile *mediaFile1 = [[SKVASTMediaFile alloc]
                                  initWithId:             @"testMediaFile1"
                                  delivery:               @"progressive"
                                  type:                   @"video/mp4"
@@ -253,13 +249,13 @@
     
     [mediaFileArray addObject:mediaFile1];
     
-    XCTAssertEqualObjects(mediaFile1, [VASTMediaFilePicker pick:mediaFileArray], @"Expected but did not pick the media file sized 320x480 for phone");
+    XCTAssertEqualObjects(mediaFile1, [SKVASTMediaFilePicker pick:mediaFileArray], @"Expected but did not pick the media file sized 320x480 for phone");
 }
 
 - (void)testMediaFilePickerTakeFirstNotSecondEqualSizedFiles
 {
     NSMutableArray *mediaFileArray = [ NSMutableArray arrayWithCapacity:0];
-    VASTMediaFile *mediaFile1 = [[VASTMediaFile alloc]
+    SKVASTMediaFile *mediaFile1 = [[SKVASTMediaFile alloc]
                                  initWithId:             @"testMediaFile1"
                                  delivery:               @"progressive"
                                  type:                   @"video/mp4"
@@ -271,7 +267,7 @@
                                  apiFramework:           @"aFrameworkName"
                                  url:                    @"theMediaFileUrl"];
     
-    VASTMediaFile *mediaFile2 = [[VASTMediaFile alloc]
+    SKVASTMediaFile *mediaFile2 = [[SKVASTMediaFile alloc]
                                  initWithId:             @"testMediaFile2"
                                  delivery:               @"progressive"
                                  type:                   @"video/mp4"
@@ -283,7 +279,7 @@
                                  apiFramework:           @"aFrameworkName"
                                  url:                    @"theMediaFileUrl"];
     
-    VASTMediaFile *mediaFile3 = [[VASTMediaFile alloc]
+    SKVASTMediaFile *mediaFile3 = [[SKVASTMediaFile alloc]
                                  initWithId:             @"testMediaFile3"
                                  delivery:               @"progressive"
                                  type:                   @"video/mp4"
@@ -299,13 +295,13 @@
     [mediaFileArray addObject:mediaFile2];
     [mediaFileArray addObject:mediaFile3];
     
-    XCTAssertEqualObjects(mediaFile1, [VASTMediaFilePicker pick:mediaFileArray], @"Expected but did not pick the first media file sized 320x480 for phone");
+    XCTAssertEqualObjects(mediaFile1, [SKVASTMediaFilePicker pick:mediaFileArray], @"Expected but did not pick the first media file sized 320x480 for phone");
 }
 
 - (void)testMediaFilePickerSizedForPhone3r5vs4inch
 {
     NSMutableArray *mediaFileArray = [ NSMutableArray arrayWithCapacity:0];
-    VASTMediaFile *mediaFile1 = [[VASTMediaFile alloc]
+    SKVASTMediaFile *mediaFile1 = [[SKVASTMediaFile alloc]
                                  initWithId:             @"testMediaFile1"
                                  delivery:               @"progressive"
                                  type:                   @"video/mp4"
@@ -317,7 +313,7 @@
                                  apiFramework:           @"aFrameworkName"
                                  url:                    @"theMediaFileUrl"];
     
-    VASTMediaFile *mediaFile2 = [[VASTMediaFile alloc]
+    SKVASTMediaFile *mediaFile2 = [[SKVASTMediaFile alloc]
                                  initWithId:             @"testMediaFile2"
                                  delivery:               @"progressive"
                                  type:                   @"video/mp4"
@@ -329,7 +325,7 @@
                                  apiFramework:           @"aFrameworkName"
                                  url:                    @"theMediaFileUrl"];
     
-    VASTMediaFile *mediaFile3 = [[VASTMediaFile alloc]
+    SKVASTMediaFile *mediaFile3 = [[SKVASTMediaFile alloc]
                                  initWithId:             @"testMediaFile3"
                                  delivery:               @"progressive"
                                  type:                   @"video/mp4"
@@ -349,10 +345,10 @@
     
     if (screenSize.height>480) {
         // 4" device
-        XCTAssertEqualObjects(mediaFile2, [VASTMediaFilePicker pick:mediaFileArray], @"Expected but did not pick the media file sized 640 x 360 for 4\" phone");
+        XCTAssertEqualObjects(mediaFile2, [SKVASTMediaFilePicker pick:mediaFileArray], @"Expected but did not pick the media file sized 640 x 360 for 4\" phone");
     } else {
         // 3.5" device
-        XCTAssertEqualObjects(mediaFile1, [VASTMediaFilePicker pick:mediaFileArray], @"Expected but did not pick the media file sized 300x400 3.5\" for phone");
+        XCTAssertEqualObjects(mediaFile1, [SKVASTMediaFilePicker pick:mediaFileArray], @"Expected but did not pick the media file sized 300x400 3.5\" for phone");
     }
 }
 

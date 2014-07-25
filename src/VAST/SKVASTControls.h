@@ -1,5 +1,5 @@
 //
-//  VASTControls.h
+//  SKVASTControls.h
 //  VAST
 //
 //  Created by Thomas Poland on 11/13/13.
@@ -10,13 +10,14 @@
 //  3 controls are available:"  pause/play (depends on context), info (to 'clickthrough' url), and 'X', stop and close.
 
 #import <UIKit/UIKit.h>
-#import "VASTViewController.h"
+#import "SKVASTViewController.h"
 
-@interface VASTControls : UIViewController
+@interface SKVASTControls : UIView
 
-- (id)initWithVASTPlayer:(VASTViewController *)vastPlayer;       // designated initializer
+- (id)initWithVASTPlayer:(SKVASTViewController *)vastPlayer;       // designated initializer
 - (void)toggleToPlayButton:(BOOL)toggleToPlay;                   // toggle the pause/play button YES=play, NO=pause
 - (void)showControls;                                            // showControls, used by VASTViewController, for example at initial start of playback
+- (void)hideControls;                                            // hideControls, used by VASTViewController, for example at initial start of playback
 - (void)updateProgressBar:(float)progress withPlayedSeconds:(float)playedSeconds withTotalDuration:(float)totalDuration;   // update the progress bar with the supplied value
 - (BOOL)controlsPaused;                                          // used by the player to detect manual pause
 

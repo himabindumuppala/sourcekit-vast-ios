@@ -1,5 +1,5 @@
 //
-//  VASTMediaFile.h
+//  SKVASTMediaFile.h
 //  VAST
 //
 //  Created by Jay Tucker on 10/15/13.
@@ -10,7 +10,7 @@
 
 #import <Foundation/Foundation.h>
 
-@interface VASTMediaFile : NSObject
+@interface SKVASTMediaFile : NSObject
 
 @property (nonatomic, copy, readonly) NSString *id_;  // add trailing underscore to id_ to avoid conflict with reserved keyword "id".
 @property (nonatomic, copy, readonly) NSString *delivery;

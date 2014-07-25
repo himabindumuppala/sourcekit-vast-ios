@@ -1,5 +1,5 @@
 //
-//  VASTError.h
+//  SKVASTError.h
 //  VAST
 //
 //  Created by Jay Tucker on 11/12/13.
@@ -20,4 +20,4 @@ typedef enum {
     VASTErrorMovieTooShort,
     VASTErrorPlayerHung,
     VASTErrorPlaybackAlreadyInProgress
-} VASTError;
+} SKVASTError;

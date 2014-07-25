@@ -1,18 +1,19 @@
 //
-//  VASTModel.m
+//  SKVASTModel.m
 //  VAST
 //
 //  Created by Jay Tucker on 10/4/13.
 //  Copyright (c) 2013 Nexage. All rights reserved.
 //
 
-#import "VASTModel.h"
-#import "VASTUrlWithId.h"
-#import "VASTMediaFile.h"
+#import "SKVASTModel.h"
+#import "SKVASTUrlWithId.h"
+#import "SKVASTMediaFile.h"
 #import "VASTXMLUtil.h"
-#import "SourceKitLogger.h"
+#import "VASTSettings.h"
+#import "SKLogger.h"
 
-@interface VASTModel ()
+@interface SKVASTModel ()
 {
     NSMutableArray *vastDocumentArray;
 }
@@ -25,7 +26,7 @@
 
 @end
 
-@implementation VASTModel
+@implementation SKVASTModel
 
 #pragma mark - "private" method
 
@@ -102,16 +103,16 @@
         }
     }
     
-    [SourceKitLogger debug:[NSString stringWithFormat:@"returning event dictionary with %d event(s)", [eventDict count]]];
+    [SKLogger debug:@"VAST - Model" withMessage:[NSString stringWithFormat:@"returning event dictionary with %lu event(s)", (unsigned long)[eventDict count]]];
     for (NSString *event in [eventDict allKeys]) {
         NSArray *array = (NSArray *)[eventDict valueForKey:event];
-        [SourceKitLogger debug:[NSString stringWithFormat:@"  %@ has %d URL(s)", event, [array count]]];
+        [SKLogger debug:@"VAST - Model" withMessage:[NSString stringWithFormat:@"%@ has %lu URL(s)", event, (unsigned long)[array count]]];
     }
     
     return eventDict;
 }
 
-- (VASTUrlWithId *)clickThrough
+- (SKVASTUrlWithId *)clickThrough
 {
     NSString *query = @"//ClickThrough";
     NSArray *array = [self resultsForQuery:query];
@@ -178,7 +179,7 @@
                 urlString = [[self urlWithCleanString:urlString] absoluteString];
             }
             
-            VASTMediaFile *mediaFile = [[VASTMediaFile alloc]
+            SKVASTMediaFile *mediaFile = [[SKVASTMediaFile alloc]
                                         initWithId:id_
                                         delivery:delivery
                                         type:type
@@ -222,12 +223,12 @@
                     break;
                 }
             }
-            VASTUrlWithId *impression = [[VASTUrlWithId alloc] initWithID:id_ url:[self urlWithCleanString:urlString]];
+            SKVASTUrlWithId *impression = [[SKVASTUrlWithId alloc] initWithID:id_ url:[self urlWithCleanString:urlString]];
             [array addObject:impression];
         }
     }
     
-    [SourceKitLogger debug:[NSString stringWithFormat:@"returning %@ array with %d element(s)", elementName, [array count]]];
+    [SKLogger debug:@"VAST - Model" withMessage:[NSString stringWithFormat:@"returning %@ array with %lu element(s)", elementName, (unsigned long)[array count]]];
     return array;
 }
 
@@ -241,8 +242,13 @@
     // this is for CDATA
     NSArray *childArray = node[@"nodeChildArray"];
     if ([childArray count] > 0) {
-        // we assume that there's only one element in the array
-        return ((NSDictionary *)childArray[0])[@"nodeContent"];
+        // return the first array element that is not a comment
+        for (NSDictionary *childNode in childArray) {
+            if ([childNode[@"nodeName"] isEqualToString:@"comment"]) {
+                continue;
+            }
+            return childNode[@"nodeContent"];
+        }
     }
     
     return nil;

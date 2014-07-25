@@ -1,5 +1,5 @@
 //
-//  NexageAppDelegate.h
+//  AppDelegate.h
 //  VASTDemo
 //
 //  Created by Thomas Poland on 9/30/13.

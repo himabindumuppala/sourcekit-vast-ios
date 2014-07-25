@@ -1,5 +1,5 @@
 //
-//  VASTViewController.h
+//  SKVASTViewController.h
 //  VAST
 //
 //  Created by Thomas Poland on 9/30/13.
@@ -21,33 +21,34 @@
 
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
-#import "VASTError.h"
+#import "SKVASTError.h"
 
-@class VASTViewController;
+@class SKVASTViewController;
 
-@protocol VASTViewControllerDelegate <NSObject>
+@protocol SKVASTViewControllerDelegate <NSObject>
 
 @required
 
-- (void)vastReady:(VASTViewController *)vastVC;  // sent when the video is ready to play - required
+- (void)vastReady:(SKVASTViewController *)vastVC;  // sent when the video is ready to play - required
 
 @optional
 
-- (void)vastError:(VASTViewController *)vastVC error:(VASTError)error;  // sent when any VASTError occurs - optional
+- (void)vastError:(SKVASTViewController *)vastVC error:(SKVASTError)error;  // sent when any VASTError occurs - optional
 
 // These optional callbacks are for basic presentation, dismissal, and calling video clickthrough url browser.
-- (void)vastWillPresentFullScreen:(VASTViewController *)vastVC;
-- (void)vastDidDismissFullScreen:(VASTViewController *)vastVC;
+- (void)vastWillPresentFullScreen:(SKVASTViewController *)vastVC;
+- (void)vastDidDismissFullScreen:(SKVASTViewController *)vastVC;
 - (void)vastOpenBrowseWithUrl:(NSURL *)url;
+- (void)vastTrackingEvent:(NSString *)eventName;
 
 @end
 
-@interface VASTViewController : UIViewController
+@interface SKVASTViewController : UIViewController
 
-@property (nonatomic, unsafe_unretained) id<VASTViewControllerDelegate>delegate;
+@property (nonatomic, unsafe_unretained) id<SKVASTViewControllerDelegate>delegate;
 @property (nonatomic, strong) NSURL *clickThrough;
 
-- (id)initWithDelegate:(id<VASTViewControllerDelegate>)delegate;  // designated initializer for VASTViewController
+- (id)initWithDelegate:(id<SKVASTViewControllerDelegate>)delegate;  // designated initializer for VASTViewController
 
 - (void)loadVideoWithURL:(NSURL *)url;            // load and prepare to play a VAST video from a URL
 - (void)loadVideoWithData:(NSData *)xmlContent;   // load and prepare to play a VAST video from existing XML data

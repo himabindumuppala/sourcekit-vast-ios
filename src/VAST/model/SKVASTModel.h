@@ -1,5 +1,5 @@
 //
-//  VASTModel.h
+//  SKVASTModel.h
 //  VAST
 //
 //  Created by Jay Tucker on 10/4/13.
@@ -9,9 +9,9 @@
 
 #import <Foundation/Foundation.h>
 
-@class VASTUrlWithId;
+@class SKVASTUrlWithId;
 
-@interface VASTModel : NSObject
+@interface SKVASTModel : NSObject
 
 // returns the version of the VAST document 
 - (NSString *)vastVersion;
@@ -27,7 +27,7 @@
 - (NSDictionary *)trackingEvents;
 
 // returns the ClickThrough URL
-- (VASTUrlWithId *)clickThrough;
+- (SKVASTUrlWithId *)clickThrough;
 
 // returns an array of VASTUrlWithId objects
 - (NSArray *)clickTracking;

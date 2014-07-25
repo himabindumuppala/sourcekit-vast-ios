@@ -10,7 +10,6 @@ written in Objective-C and works in both iPhone and iPad applications.
 - Handles VAST & VAST Wrapper
 - 4 level logging
 - Integrates with just a few lines of code
-- Optionally choose to validate XML with libxml
 - ARC support
 
 **Requirements:**
@@ -26,44 +25,50 @@ Step 1: Include the "VAST" & "SourceKitCommon" Xcode projects.  Please make sure
 
 Step 2: Copy or include the following header files into your project;
 
-	SourceKitLogger.h
-	VAST.h
-	VASTError.h
-	VASTViewController.h
+	SKVASTError.h
+    VASTSettings.h
+	SKVASTViewController.h
 	
 Step 3: Import these header files into the class which will use a VASTViewController (step 7):
 
-	#import "SourceKitLogger.h"
-	#import "VAST.h"
+	#import "VASTError.h"
+	#import "VASTViewController.h"
+	#import "VASTSettings.h"
 
-Step 4: Drag the VASTResources bundle from the VAST Project Products folder into your main project's target 'Copy Bundle Resources' build phase. THIS IS AN IMPORTANT STEP.
+Step 4: Edit Build Settings
 
-Step 5: Edit Build Settings
-
-	Header Search Path => /usr/include/libxml2
+	Header Search Paths => /usr/include/libxml2
 	Other Linker Flags => -lxml2
 
-Step 6: Edit Build Phases under target
+    Edit Build Phases under target
 
 	Target Dependencies - Add VAST & SourceKitCommon projects
 	Link Binary with Libraries - Add libVAST.a, libSourceKitCommon.a, MediaPlayer.framework & SystemConfiguration.framework
 	
-Step 7: Create a VASTViewController and initialize it with a delegate, then call the loadVideoWithURL: method with a url that will return valid VAST XML formatted content, as in this example:
+Step 5: Create a SKVASTViewController and implement SKVASTViewControllerDelegate delegate. Then call the loadVideoWithURL: method with a url that will return valid VAST XML formatted content, as in this example:
 
-    self.vastVC = [[VASTViewController alloc] initWithDelegate: self];
+    self.vastVC = [[SKVASTViewController alloc] initWithDelegate: self];
    	NSURL* url = [NSURL URLWithString:@"...valid url for a VAST XML document..."];
     [self.vastVC loadVideoWithURL:url];
     
-Step 8: Listen for VASTViewControllerDelegate callbacks. Please look into VASTViewControllerDelegate.h for more information.  To play the video, you must wait for the 'vastReady' callback, then send the playVideo message, as follows:
+Step 6: Listen for SKVASTViewControllerDelegate callbacks. Please look into SKVASTViewControllerDelegate.h for more information.  To play the video, you must wait for the 'vastReady' callback, then send the playVideo message, as follows:
 
-	- (void)vastReady:(VASTViewController *)vc
+	- (void)vastReady:(SKVASTViewController *)vc
 	{
     	[vc play];
 	}
-
-Step 9: (Optional) To see logging:
 	
-	[SourceKitLogger setLogLevel:SourceKitLogLevelDebug];   // select desired log level
+Optional: If you are interested in listening for different events (start, firstquartile, complete, etc.), use the following:
+
+	-(void)vastTrackingEvent:(NSString *)eventName
+	{
+		NSLog(@"callback for event %@", eventName);
+	}
+    
+Optional: To enable 4 level logging, insert this code in your AppDelegate. Its settings affect both MRAID & VAST if you have it in your app:
+	
+	[SKLogger setLogLevel:SourceKitLogLevelDebug];   // select desired log level
+
 
 That's it! 
 

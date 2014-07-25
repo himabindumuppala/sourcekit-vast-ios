@@ -1,57 +1,56 @@
 //
-//  VAST2Parser.m
+//  SKVAST2Parser.m
 //  VAST
 //
 //  Created by Jay Tucker on 10/2/13.
 //  Copyright (c) 2013 Nexage. All rights reserved.
 //
 
-#import "VAST2Parser.h"
+#import "SKVAST2Parser.h"
 #import "VASTXMLUtil.h"
-#import "VASTModel.h"
-#import "VASTError.h"
+#import "SKVASTModel.h"
+#import "SKVASTError.h"
 #import "VASTSchema.h"
-#import "SourceKitLogger.h"
+#import "VASTSettings.h"
+#import "SKLogger.h"
 
-static int kMaxRecursiveDepth = 5;
-
-@interface VAST2Parser ()
+@interface SKVAST2Parser ()
 {
-    VASTModel *vastModel;
+    SKVASTModel *vastModel;
 }
 
-- (VASTError)parseRecursivelyWithData:(NSData *)vastData depth:(int)depth;
+- (SKVASTError)parseRecursivelyWithData:(NSData *)vastData depth:(int)depth;
 
 @end
 
-@implementation VAST2Parser
+@implementation SKVAST2Parser
 
 - (id)init
 {
     self = [super init];
     if (self) {
-        vastModel = [[VASTModel alloc] init];
+        vastModel = [[SKVASTModel alloc] init];
     }
     return self;
 }
 
 #pragma mark - "public" methods
 
-- (void)parseWithUrl:(NSURL *)url completion:(void (^)(VASTModel *, VASTError))block
+- (void)parseWithUrl:(NSURL *)url completion:(void (^)(SKVASTModel *, SKVASTError))block
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSData *vastData = [NSData dataWithContentsOfURL:url];
-        VASTError vastError = [self parseRecursivelyWithData:vastData depth:0];
+        SKVASTError vastError = [self parseRecursivelyWithData:vastData depth:0];
         dispatch_async(dispatch_get_main_queue(), ^{
             block(vastModel, vastError);
         });
     });
 }
 
-- (void)parseWithData:(NSData *)vastData completion:(void (^)(VASTModel *, VASTError))block
+- (void)parseWithData:(NSData *)vastData completion:(void (^)(SKVASTModel *, SKVASTError))block
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        VASTError vastError = [self parseRecursivelyWithData:vastData depth:0];
+        SKVASTError vastError = [self parseRecursivelyWithData:vastData depth:0];
         dispatch_async(dispatch_get_main_queue(), ^{
             block(vastModel, vastError);
         });
@@ -60,7 +59,7 @@ static int kMaxRecursiveDepth = 5;
 
 #pragma mark - "private" method
 
-- (VASTError)parseRecursivelyWithData:(NSData *)vastData depth:(int)depth
+- (SKVASTError)parseRecursivelyWithData:(NSData *)vastData depth:(int)depth
 {
     if (depth >= kMaxRecursiveDepth) {
         vastModel = nil;
@@ -69,7 +68,7 @@ static int kMaxRecursiveDepth = 5;
     
     // sanity check
     NSString *content = [[NSString alloc] initWithData:vastData encoding:NSUTF8StringEncoding];
-    [SourceKitLogger debug:[NSString stringWithFormat:@"VAST file\n%@", content]];
+    [SKLogger debug:@"VAST-Parser" withMessage:[NSString stringWithFormat:@"VAST file\n%@", content]];
 
     // Validate the basic XML syntax of the VAST document.
     BOOL isValid;
@@ -79,17 +78,19 @@ static int kMaxRecursiveDepth = 5;
         return VASTErrorXMLParse;
     }
 
-//  Uncomment this section in order to validate the VAST document's schema
-//
-//    // Using header data
-//    NSData *vastSchemaData = [NSData dataWithBytesNoCopy:vast_2_0_1_xsd
-//                                               length:vast_2_0_1_xsd_len
-//                                         freeWhenDone:NO];
-//    isValid = validateXMLDocAgainstSchema(vastData, vastSchemaData);
-//    if (!isValid) {
-//        vastModel = nil;
-//        return VASTErrorSchemaValidation;
-//    }
+    if (kValidateWithSchema) {
+        [SKLogger debug:@"VAST-Parser" withMessage:@"Validating against schema"];
+        
+        // Using header data
+        NSData *vastSchemaData = [NSData dataWithBytesNoCopy:vast_2_0_1_xsd
+                                                      length:vast_2_0_1_xsd_len
+                                                freeWhenDone:NO];
+        isValid = validateXMLDocAgainstSchema(vastData, vastSchemaData);
+        if (!isValid) {
+            vastModel = nil;
+            return VASTErrorSchemaValidation;
+        }
+    }
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wundeclared-selector"
