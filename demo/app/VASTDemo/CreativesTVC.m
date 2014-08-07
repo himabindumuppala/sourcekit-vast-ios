@@ -12,7 +12,7 @@
 #import "VASTSettings.h"
 #import "SKBrowser.h"
 
-@interface CreativesTVC () <SKVASTViewControllerDelegate, SourceKitBrowserDelegate>
+@interface CreativesTVC () <SKVASTViewControllerDelegate, SKBrowserDelegate>
 {
     SKVASTViewController *vastVC;
 }
