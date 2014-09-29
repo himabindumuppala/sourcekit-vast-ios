@@ -7,7 +7,6 @@
 //
 
 #import "SKVASTEventProcessor.h"
-#import "VASTSettings.h"
 #import "SKVASTUrlWithId.h"
 #import "SKLogger.h"
 
@@ -41,7 +40,7 @@
                 [self.delegate vastTrackingEvent:@"start"];
             }
 
-            for (NSURL *aURL in [self.trackingEvents objectForKey:@"start"]) {
+            for (NSURL *aURL in (self.trackingEvents)[@"start"]) {
                 [self sendTrackingRequest:aURL];
                 [SKLogger debug:@"VAST - Event Processor" withMessage:[NSString stringWithFormat:@"Sent track start to url: %@", [aURL absoluteString]]];
             }
@@ -52,7 +51,7 @@
                 [self.delegate vastTrackingEvent:@"firstQuartile"];
             }
             
-            for (NSURL *aURL in [self.trackingEvents objectForKey:@"firstQuartile"]) {
+            for (NSURL *aURL in (self.trackingEvents)[@"firstQuartile"]) {
                 [self sendTrackingRequest:aURL];
                 [SKLogger debug:@"VAST - Event Processor" withMessage:[NSString stringWithFormat:@"Sent firstQuartile to url: %@", [aURL absoluteString]]];
             }
@@ -63,7 +62,7 @@
                 [self.delegate vastTrackingEvent:@"midpoint"];
             }
             
-            for (NSURL *aURL in [self.trackingEvents objectForKey:@"midpoint"]) {
+            for (NSURL *aURL in (self.trackingEvents)[@"midpoint"]) {
                 [self sendTrackingRequest:aURL];
                 [SKLogger debug:@"VAST - Event Processor" withMessage:[NSString stringWithFormat:@"Sent midpoint to url: %@", [aURL absoluteString]]];
             }
@@ -74,7 +73,7 @@
                 [self.delegate vastTrackingEvent:@"thirdQuartile"];
             }
             
-            for (NSURL *aURL in [self.trackingEvents objectForKey:@"thirdQuartile"]) {
+            for (NSURL *aURL in (self.trackingEvents)[@"thirdQuartile"]) {
                 [self sendTrackingRequest:aURL];
                 [SKLogger debug:@"VAST - Event Processor" withMessage:[NSString stringWithFormat:@"Sent thirdQuartile to url: %@", [aURL absoluteString]]];
             }
@@ -85,7 +84,7 @@
                 [self.delegate vastTrackingEvent:@"complete"];
             }
             
-            for( NSURL *aURL in [self.trackingEvents objectForKey:@"complete"]) {
+            for( NSURL *aURL in (self.trackingEvents)[@"complete"]) {
                 [self sendTrackingRequest:aURL];
                 [SKLogger debug:@"VAST - Event Processor" withMessage:[NSString stringWithFormat:@"Sent complete to url: %@", [aURL absoluteString]]];
             }
@@ -96,7 +95,7 @@
                 [self.delegate vastTrackingEvent:@"close"];
             }
             
-            for (NSURL *aURL in [self.trackingEvents objectForKey:@"close"]) {
+            for (NSURL *aURL in (self.trackingEvents)[@"close"]) {
                 [self sendTrackingRequest:aURL];
                 [SKLogger debug:@"VAST - Event Processor" withMessage:[NSString stringWithFormat:@"Sent close to url: %@", [aURL absoluteString]]];
             }
@@ -107,7 +106,7 @@
                 [self.delegate vastTrackingEvent:@"pause"];
             }
             
-            for (NSURL *aURL in [self.trackingEvents objectForKey:@"pause"]) {
+            for (NSURL *aURL in (self.trackingEvents)[@"pause"]) {
                 [self sendTrackingRequest:aURL];
                 [SKLogger debug:@"VAST - Event Processor" withMessage:[NSString stringWithFormat:@"Sent pause start to url: %@", [aURL absoluteString]]];
             }
@@ -118,7 +117,7 @@
                 [self.delegate vastTrackingEvent:@"resume"];
             }
             
-            for (NSURL *aURL in [self.trackingEvents objectForKey:@"resume"]) {
+            for (NSURL *aURL in (self.trackingEvents)[@"resume"]) {
                 [self sendTrackingRequest:aURL];
                 [SKLogger debug:@"VAST - Event Processor" withMessage:[NSString stringWithFormat:@"Sent resume start to url: %@", [aURL absoluteString]]];
             }

@@ -8,7 +8,6 @@
 
 #import "SKVASTViewController.h"
 #import <MediaPlayer/MediaPlayer.h>
-#import <netdb.h>
 #import "VASTSettings.h"
 #import "SKLogger.h"
 #import "SKVAST2Parser.h"
@@ -20,6 +19,7 @@
 #import "SKVASTMediaFilePicker.h"
 #import "SKReachability.h"
 
+#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
 #define SYSTEM_VERSION_LESS_THAN(v)     ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedAscending)
 
 static const NSString* kPlaybackFinishedUserInfoErrorKey=@"error";
@@ -218,7 +218,13 @@ typedef enum {
     isViewOnScreen=YES;
     if (!hasPlayerStarted) {
         loadingIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
-        loadingIndicator.frame = CGRectMake( (self.view.frame.size.height/2)-25.0, (self.view.frame.size.width/2)-25.0,50,50);
+        
+        if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0") ) {
+            loadingIndicator.frame = CGRectMake( (self.view.frame.size.width/2)-25.0, (self.view.frame.size.height/2)-25.0,50,50);
+        }
+        else {
+            loadingIndicator.frame = CGRectMake( (self.view.frame.size.height/2)-25.0, (self.view.frame.size.width/2)-25.0,50,50);
+        }
         [loadingIndicator startAnimating];
         [self.view addSubview:loadingIndicator];
     } else {
@@ -314,7 +320,7 @@ typedef enum {
         [SKLogger debug:@"VAST - View Controller" withMessage:@"playback did finish"];
         
         NSDictionary* userInfo=[notification userInfo];
-        NSString* error=[userInfo objectForKey:kPlaybackFinishedUserInfoErrorKey];
+        NSString* error= userInfo[kPlaybackFinishedUserInfoErrorKey];
         
         if (error) {
             [SKLogger error:@"VAST - View Controller" withMessage:[NSString stringWithFormat:@"playback error:  %@", error]];
@@ -439,8 +445,8 @@ typedef enum {
         [SKLogger warning:@"VAST - View Controller" withMessage:[NSString stringWithFormat:@"Exception - updatePlayedSeconds: %@", e]];
         // The hang test below will fire if playedSeconds doesn't update (including a NaN value), so no need for further action here.
     }
-    
-    [self.videoHangTest addObject:[NSNumber numberWithInteger:(int)(playedSeconds*10.0)]];     // add new number to end of hang test buffer
+
+    [self.videoHangTest addObject:@((int) (playedSeconds * 10.0))];     // add new number to end of hang test buffer
     
     if ([self.videoHangTest count]>20) {  // only check for hang if we have at least 20 elements or about 5 seconds of played video, to prevent false positives
         if ([[self.videoHangTest firstObject] integerValue]==[[self.videoHangTest lastObject] integerValue]) {

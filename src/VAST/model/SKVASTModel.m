@@ -10,7 +10,6 @@
 #import "SKVASTUrlWithId.h"
 #import "SKVASTMediaFile.h"
 #import "VASTXMLUtil.h"
-#import "VASTSettings.h"
 #import "SKLogger.h"
 
 @interface SKVASTModel ()

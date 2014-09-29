@@ -30,8 +30,8 @@ maintainAspectRatio:(NSString *)maintainAspectRatio
         _bitrate = bitrate ? [bitrate intValue] : 0;
         _width = width ? [width intValue] : 0;
         _height = height ? [height intValue] : 0;
-        _scalable = scalable ? [scalable boolValue] : YES;
-        _maintainAspectRatio = maintainAspectRatio ? [maintainAspectRatio boolValue] : NO;
+        _scalable = scalable == nil || [scalable boolValue];
+        _maintainAspectRatio = maintainAspectRatio != nil && [maintainAspectRatio boolValue];
         _apiFramework = apiFramework;
         _url = [NSURL URLWithString:url];
     }

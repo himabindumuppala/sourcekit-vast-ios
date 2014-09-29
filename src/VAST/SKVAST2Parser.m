@@ -9,7 +9,6 @@
 #import "SKVAST2Parser.h"
 #import "VASTXMLUtil.h"
 #import "SKVASTModel.h"
-#import "SKVASTError.h"
 #import "VASTSchema.h"
 #import "VASTSettings.h"
 #import "SKLogger.h"

@@ -7,10 +7,7 @@
 //
 
 #import "SKVASTControls.h"
-#import "SKVASTViewController.h"
-#import "VASTSettings.h"
 #import "SKLogger.h"
-#import <MediaPlayer/MediaPlayer.h>
 
 static const float kControlTimerInterval = 2.0;
 static const float kControlsToobarFixedLeftWidth = 16.0;
