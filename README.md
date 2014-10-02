@@ -1,7 +1,7 @@
 Nexage Integration SourceKit for VAST
 =====================================
 
-Nexage Integration SourceKit for VAST is an easy to use library which implements the IAB VAST 2.0 spec (http://www.iab.net/guidelines/508676/digitalvideo/vsuite/vast/vast_copy). It is 
+Nexage Integration SourceKit for VAST is an easy to use library which implements the [IAB VAST 2.0 spec] (http://www.iab.net/guidelines/508676/digitalvideo/vsuite/vast/vast_copy). It is 
 written in Objective-C and works in both iPhone and iPad applications.
 
 **Features:**
@@ -11,6 +11,8 @@ written in Objective-C and works in both iPhone and iPad applications.
 - 4 level logging
 - Integrates with just a few lines of code
 - ARC support
+
+Please look at our [Wiki](https://github.com/nexage/sourcekit-vast-ios/wiki) for additional information & FAQ.
 
 **Requirements:**
 
