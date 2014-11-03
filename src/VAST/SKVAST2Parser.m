@@ -81,8 +81,8 @@
         [SKLogger debug:@"VAST-Parser" withMessage:@"Validating against schema"];
         
         // Using header data
-        NSData *vastSchemaData = [NSData dataWithBytesNoCopy:vast_2_0_1_xsd
-                                                      length:vast_2_0_1_xsd_len
+        NSData *vastSchemaData = [NSData dataWithBytesNoCopy:nexage_vast_2_0_1_xsd
+                                                      length:nexage_vast_2_0_1_xsd_len
                                                 freeWhenDone:NO];
         isValid = validateXMLDocAgainstSchema(vastData, vastSchemaData);
         if (!isValid) {

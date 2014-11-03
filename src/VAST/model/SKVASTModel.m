@@ -256,7 +256,7 @@
 - (NSURL*)urlWithCleanString:(NSString *)string
 {
     NSString *cleanUrlString = [string stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];  // remove leading, trailing \n or space
-    cleanUrlString = [cleanUrlString stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];                       // encode the clean string
+    cleanUrlString = [cleanUrlString stringByReplacingOccurrencesOfString:@"|" withString:@"%7c"];
     return [NSURL URLWithString:cleanUrlString];                                                                            // return the resulting URL
 }
 

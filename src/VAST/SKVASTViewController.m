@@ -85,7 +85,6 @@ typedef enum {
         _delegate = delegate;
         currentQuartile=VASTFirstQuartile;
         self.videoHangTest=[NSMutableArray arrayWithCapacity:20];
-        
         [self setupReachability];
         
         [[NSNotificationCenter defaultCenter] addObserver: self
@@ -153,8 +152,7 @@ typedef enum {
         return;
     }
     isLoadCalled = YES;
-    [self startVideoLoadTimeoutTimer];
-    
+
     void (^parserCompletionBlock)(SKVASTModel *vastModel, SKVASTError vastError) = ^(SKVASTModel *vastModel, SKVASTError vastError) {
         [SKLogger debug:@"VAST - View Controller" withMessage:@"back from block in loadVideoFromData"];
         
@@ -163,7 +161,6 @@ typedef enum {
             if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {  // The VAST document was not readable, so no Error urls exist, thus none are sent.
                 [self.delegate vastError:self error:vastError];
             }
-            [self stopVideoLoadTimeoutTimer];
             return;
         }
         
@@ -174,9 +171,6 @@ typedef enum {
         clickTracking = [vastModel clickTracking];
         mediaFileURL = [SKVASTMediaFilePicker pick:[vastModel mediaFiles]].url;
         
-        // Stop the timer so that it won't trigger timeout errors for both success and failure
-        [self stopVideoLoadTimeoutTimer];
-
         if(!mediaFileURL) {
             [SKLogger error:@"VAST - View Controller" withMessage:@"Error - VASTMediaFilePicker did not find a compatible mediaFile - VASTViewcontroller will not be presented"];
             if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
@@ -273,6 +267,7 @@ typedef enum {
             case MPMoviePlaybackStatePlaying:  // 1
                 isPlaying=YES;
                 if (loadingIndicator) {
+                    [self stopVideoLoadTimeoutTimer];
                     [loadingIndicator stopAnimating];
                     [loadingIndicator removeFromSuperview];
                     loadingIndicator = nil;
@@ -323,6 +318,7 @@ typedef enum {
         NSString* error= userInfo[kPlaybackFinishedUserInfoErrorKey];
         
         if (error) {
+            [self stopVideoLoadTimeoutTimer];  // don't time out if there was a playback error
             [SKLogger error:@"VAST - View Controller" withMessage:[NSString stringWithFormat:@"playback error:  %@", error]];
             if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
                 [self.delegate vastError:self error:VASTErrorPlaybackError];
@@ -356,6 +352,7 @@ typedef enum {
     
     if (movieDuration < 0.5 || isnan(movieDuration)) {
         // movie too short - ignore it
+        [self stopVideoLoadTimeoutTimer];  // don't time out in this case
         [SKLogger warning:@"VAST - View Controller" withMessage:@"Movie too short - will dismiss player"];
         if ([self.delegate respondsToSelector:@selector(vastError:error:)]) {
             [self.delegate vastError:self error:VASTErrorMovieTooShort];
@@ -497,10 +494,10 @@ typedef enum {
 // Reports error if vast video document times out while loading
 - (void)startVideoLoadTimeoutTimer
 {
-    [self stopVideoLoadTimeoutTimer];
-    videoLoadTimeoutTimer = [NSTimer scheduledTimerWithTimeInterval:kVideoLoadTimeoutInterval
+    [SKLogger error:@"VAST - View Controller" withMessage:@"Start Video Load Timer"];
+    videoLoadTimeoutTimer = [NSTimer scheduledTimerWithTimeInterval:[VASTSettings vastVideoLoadTimeout]
                                                              target:self
-                                                           selector:@selector(videoLoadTimeout)
+                                                           selector:@selector(videoLoadTimerFired)
                                                            userInfo:nil
                                                             repeats:NO];
 }
@@ -509,11 +506,14 @@ typedef enum {
 {
     [videoLoadTimeoutTimer invalidate];
     videoLoadTimeoutTimer = nil;
+    [SKLogger error:@"VAST - View Controller" withMessage:@"Stop Video Load Timer"];
 }
 
-- (void)videoLoadTimeout
+- (void)videoLoadTimerFired
 {
     [SKLogger error:@"VAST - View Controller" withMessage:@"Video Load Timeout"];
+    [self close];
+    
     if (vastErrors) {
        [SKLogger debug:@"VAST - View Controller" withMessage:@"Sending Error requests"];
         [self.eventProcessor sendVASTUrlsWithId:vastErrors];
@@ -569,6 +569,7 @@ typedef enum {
             currentPlayedPercentage = 0.0;
             
             // Create and prepare the player to confirm the video is playable (or not) as early as possible
+            [self startVideoLoadTimeoutTimer];
             self.moviePlayer = [[MPMoviePlayerController alloc] initWithContentURL: mediaFileURL];
             self.moviePlayer.shouldAutoplay = NO; // YES by default - But we don't want to autoplay
             self.moviePlayer.controlStyle=MPMovieControlStyleNone;  // To use custom control toolbar

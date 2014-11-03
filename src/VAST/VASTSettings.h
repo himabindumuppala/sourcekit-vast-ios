@@ -11,6 +11,15 @@
 extern const NSString* kVASTKitVersion;
 extern const int kMaxRecursiveDepth;
 extern const float kPlayTimeCounterInterval;
-extern const float kVideoLoadTimeoutInterval;
+extern const NSTimeInterval  kVideoLoadTimeoutInterval;
 extern const NSTimeInterval kFirstShowControlsDelay;
 extern const BOOL kValidateWithSchema;
+
+@interface VASTSettings : NSObject
+
++ (NSTimeInterval)vastVideoLoadTimeout;
+
++ (void)setVastVideoLoadTimeout:(NSTimeInterval)newValue;
+
+@end
+
