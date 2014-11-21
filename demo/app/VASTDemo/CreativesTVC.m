@@ -39,7 +39,7 @@
     
         NSString *xmlPath = [[NSBundle mainBundle] pathForResource:cell.detailTextLabel.text ofType:@"xml"];
         NSData *fileContent = [NSData dataWithContentsOfFile:xmlPath];
-        vastVC = [[SKVASTViewController alloc] initWithDelegate:self];
+        vastVC = [[SKVASTViewController alloc] initWithDelegate:self withViewController:self];
         [vastVC loadVideoWithData:fileContent];
     }
 }

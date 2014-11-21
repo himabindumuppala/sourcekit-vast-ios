@@ -95,8 +95,11 @@
                     if (oldEventArray) {
                         [newEventArray addObjectsFromArray:oldEventArray];
                     }
-                    [newEventArray addObject:[self urlWithCleanString:urlString]];
-                    [eventDict setValue:newEventArray forKey:event];
+                    NSURL *eventURL = [self urlWithCleanString:urlString];
+                    if (eventURL) {
+                        [newEventArray addObject:[self urlWithCleanString:urlString]];
+                        [eventDict setValue:newEventArray forKey:event];
+                    }
                 }
             }
         }

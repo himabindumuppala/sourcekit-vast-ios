@@ -54,6 +54,7 @@ typedef enum {
     BOOL statusBarHidden;
     CurrentVASTQuartile currentQuartile;
     UIActivityIndicatorView *loadingIndicator;
+    UIViewController *presentingViewController;
     
     SKReachability *reachabilityForVAST;
     NetworkReachable networkReachableBlock;
@@ -74,15 +75,16 @@ typedef enum {
 
 - (id)init
 {
-    return [self initWithDelegate:nil];
+    return [self initWithDelegate:nil withViewController:nil];
 }
 
 // designated initializer
-- (id)initWithDelegate:(id<SKVASTViewControllerDelegate>)delegate;
+- (id)initWithDelegate:(id<SKVASTViewControllerDelegate>)delegate withViewController:(UIViewController *)viewController
 {
     self = [super init];
     if (self) {
         _delegate = delegate;
+        presentingViewController = viewController;
         currentQuartile=VASTFirstQuartile;
         self.videoHangTest=[NSMutableArray arrayWithCapacity:20];
         [self setupReachability];
@@ -786,15 +788,14 @@ typedef enum {
         [self.delegate vastWillPresentFullScreen:self];
     }
     
-    id rootViewController = [[UIApplication sharedApplication] keyWindow].rootViewController;
-    if ([rootViewController respondsToSelector:@selector(presentViewController:animated:completion:)]) {
+    if ([presentingViewController respondsToSelector:@selector(presentViewController:animated:completion:)]) {
         // used if running >= iOS 6
-        [rootViewController presentViewController:self animated:NO completion:nil];
+        [presentingViewController presentViewController:self animated:NO completion:nil];
     } else {
         // Turn off the warning about using a deprecated method.
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-        [rootViewController presentModalViewController:self animated:NO];
+        [presentingViewController presentModalViewController:self animated:NO];
 #pragma clang diagnostic pop
     }
 }

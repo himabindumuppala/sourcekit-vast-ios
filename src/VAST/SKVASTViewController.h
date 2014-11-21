@@ -48,7 +48,7 @@
 @property (nonatomic, unsafe_unretained) id<SKVASTViewControllerDelegate>delegate;
 @property (nonatomic, strong) NSURL *clickThrough;
 
-- (id)initWithDelegate:(id<SKVASTViewControllerDelegate>)delegate;  // designated initializer for VASTViewController
+- (id)initWithDelegate:(id<SKVASTViewControllerDelegate>)delegate withViewController:(UIViewController *)viewController;  // designated initializer for VASTViewController
 
 - (void)loadVideoWithURL:(NSURL *)url;            // load and prepare to play a VAST video from a URL
 - (void)loadVideoWithData:(NSData *)xmlContent;   // load and prepare to play a VAST video from existing XML data

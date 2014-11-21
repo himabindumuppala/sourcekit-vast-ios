@@ -8,7 +8,7 @@
 
 #import "VASTSettings.h"
 
-const NSString* kVASTKitVersion     = @"1.0.5";
+const NSString* kVASTKitVersion     = @"1.0.6";
 int const kMaxRecursiveDepth = 5;
 float const kPlayTimeCounterInterval = 0.25;
 NSTimeInterval const kVideoLoadTimeoutInterval = 10.0;
